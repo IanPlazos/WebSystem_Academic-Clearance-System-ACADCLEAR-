@@ -1,0 +1,66 @@
+
+@extends('super-admin.layouts.app')
+
+@section('content')
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Add New University</h1>
+    <a href="{{ route('super-admin.tenants.index') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">University Information</h6>
+    </div>
+    <div class="card-body">
+        <form action="{{ route('super-admin.tenants.store') }}" method="POST">
+            @csrf
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">University Name *</label>
+                    <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Slug *</label>
+                    <input type="text" name="slug" class="form-control" value="{{ old('slug') }}" 
+                           placeholder="bukidnon-state-u" required>
+                    <small>Used in URL: https://slug.acadclear.com</small>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Domain *</label>
+                    <input type="text" name="domain" class="form-control" value="{{ old('domain') }}" 
+                           placeholder="bukidnon.acadclear.com" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Database Name *</label>
+                    <input type="text" name="database" class="form-control" value="{{ old('database') }}" 
+                           placeholder="acadclear_bukidnon" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Initial Plan *</label>
+                    <select name="plan_id" class="form-select" required>
+                        <option value="">Select Plan</option>
+                        @foreach($plans as $plan)
+                            <option value="{{ $plan->id }}" {{ old('plan_id') == $plan->id ? 'selected' : '' }}>
+                                {{ $plan->name }} - ₱{{ number_format($plan->price, 2) }}/month
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Create University
+            </button>
+        </form>
+    </div>
+</div>
+@endsection

@@ -43,7 +43,7 @@
             <hr class="sidebar-divider my-0">
 
             <!-- Nav Item - Dashboard -->
-            <li class="nav-item active">
+            <li class="nav-item {{ request()->routeIs('admin.dashboard') || request()->routeIs('staff.dashboard') || request()->routeIs('student.dashboard') ? 'active' : '' }}">
                 @if($user->role === 'school_admin')
                     <a class="nav-link" href="{{ route('admin.dashboard') }}">
                 @elseif($user->role === 'staff')
@@ -56,48 +56,92 @@
             </li>
 
             @if($user->role === 'school_admin')
-            <!-- Divider -->
-            <hr class="sidebar-divider">
+                <!-- Divider -->
+                <hr class="sidebar-divider">
 
-            <!-- Heading -->
-            <div class="sidebar-heading">
-                Management
-            </div>
+                <!-- Heading -->
+                <div class="sidebar-heading">
+                    Management
+                </div>
 
-            <!-- Nav Item - Colleges -->
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('admin.colleges.index') }}">
-                    <i class="fas fa-fw fa-university"></i>
-                    <span>Colleges</span></a>
-            </li>
+                <!-- Nav Item - Colleges -->
+                <li class="nav-item {{ request()->routeIs('admin.colleges.*') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('admin.colleges.index') }}">
+                        <i class="fas fa-fw fa-university"></i>
+                        <span>Colleges</span></a>
+                </li>
 
-            <!-- Nav Item - Departments -->
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('admin.departments.index') }}">
-                    <i class="fas fa-fw fa-building"></i>
-                    <span>Departments</span></a>
-            </li>
+                <!-- Nav Item - Departments -->
+                <li class="nav-item {{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('admin.departments.index') }}">
+                        <i class="fas fa-fw fa-building"></i>
+                        <span>Departments</span></a>
+                </li>
 
-            <!-- Nav Item - Students -->
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('admin.students.index') }}">
-                    <i class="fas fa-fw fa-users"></i>
-                    <span>Students</span></a>
-            </li>
+                <!-- Nav Item - Students -->
+                <li class="nav-item {{ request()->routeIs('admin.students.*') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('admin.students.index') }}">
+                        <i class="fas fa-fw fa-users"></i>
+                        <span>Students</span></a>
+                </li>
 
-            <!-- Nav Item - Staff -->
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('admin.staff.index') }}">
-                    <i class="fas fa-fw fa-user-tie"></i>
-                    <span>Staff</span></a>
-            </li>
+                <!-- Nav Item - Staff -->
+                <li class="nav-item {{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('admin.staff.index') }}">
+                        <i class="fas fa-fw fa-user-tie"></i>
+                        <span>Staff</span></a>
+                </li>
 
-            <!-- Nav Item - Reports -->
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('admin.reports.index') }}">
-                    <i class="fas fa-fw fa-file-alt"></i>
-                    <span>Reports</span></a>
-            </li>
+                <!-- Nav Item - Reports -->
+                <li class="nav-item {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('admin.reports.index') }}">
+                        <i class="fas fa-fw fa-file-alt"></i>
+                        <span>Reports</span></a>
+                </li>
+            @elseif($user->role === 'staff')
+                <!-- Divider -->
+                <hr class="sidebar-divider">
+
+                <!-- Heading -->
+                <div class="sidebar-heading">
+                    Clearance
+                </div>
+
+                <!-- Nav Item - Clearances -->
+                <li class="nav-item {{ request()->routeIs('staff.clearances.*') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('staff.clearances.index') }}">
+                        <i class="fas fa-fw fa-list"></i>
+                        <span>Clearances</span></a>
+                </li>
+
+                <!-- Nav Item - Export -->
+                <li class="nav-item {{ request()->routeIs('staff.clearances.export') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('staff.clearances.export') }}">
+                        <i class="fas fa-fw fa-download"></i>
+                        <span>Export</span></a>
+                </li>
+            @else
+                <!-- Divider -->
+                <hr class="sidebar-divider">
+
+                <!-- Heading -->
+                <div class="sidebar-heading">
+                    Clearance
+                </div>
+
+                <!-- Nav Item - My Clearances -->
+                <li class="nav-item {{ request()->routeIs('student.clearances.index') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('student.clearances.index') }}">
+                        <i class="fas fa-fw fa-list"></i>
+                        <span>My Clearances</span></a>
+                </li>
+
+                <!-- Nav Item - Summary -->
+                <li class="nav-item {{ request()->routeIs('student.clearances.summary') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('student.clearances.summary') }}">
+                        <i class="fas fa-fw fa-chart-bar"></i>
+                        <span>Summary</span></a>
+                </li>
             @endif
 
             <!-- Divider -->

@@ -1,0 +1,167 @@
+@extends('super-admin.layouts.app')
+
+@section('content')
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">University Details</h1>
+    <a href="{{ route('super-admin.tenants.index') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to List
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">University Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>Name:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {{ $tenant->name }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>Slug:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {{ $tenant->slug }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>Domain:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {{ $tenant->domain }}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>Database:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        <code>{{ $tenant->database }}</code>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>Status:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        <span class="badge bg-{{ $tenant->status == 'active' ? 'success' : 'warning' }}">
+                            {{ ucfirst($tenant->status) }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>Created:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {{ $tenant->created_at->format('F d, Y H:i:s') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Current Subscription</h6>
+            </div>
+            <div class="card-body">
+                @if($currentSubscription)
+                    <div class="mb-3">
+                        <strong>Plan:</strong> {{ $currentSubscription->plan->name }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Starts:</strong> {{ $currentSubscription->starts_at->format('M d, Y') }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Ends:</strong> {{ $currentSubscription->ends_at->format('M d, Y') }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Status:</strong> 
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                @else
+                    <p class="text-muted">No active subscription</p>
+                @endif
+            </div>
+        </div>
+        
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <a href="{{ route('super-admin.tenants.edit', $tenant) }}" class="btn btn-warning btn-block w-100 mb-2">
+                    <i class="fas fa-edit"></i> Edit University
+                </a>
+                
+                <form action="{{ route('super-admin.tenants.toggle-status', $tenant) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-{{ $tenant->status == 'active' ? 'warning' : 'success' }} btn-block w-100">
+                        <i class="fas fa-{{ $tenant->status == 'active' ? 'pause' : 'play' }}"></i>
+                        {{ $tenant->status == 'active' ? 'Suspend' : 'Activate' }} University
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Subscription History</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Plan</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($subscriptionHistory as $sub)
+                            <tr>
+                                <td>{{ $sub->plan->name }}</td>
+                                <td>{{ $sub->starts_at->format('M d, Y') }}</td>
+                                <td>{{ $sub->ends_at->format('M d, Y') }}</td>
+                                <td>₱{{ number_format($sub->amount_paid, 2) }}</td>
+                                <td>
+                                    <span class="badge bg-{{ $sub->status == 'active' ? 'success' : 'secondary' }}">
+                                        {{ ucfirst($sub->status) }}
+                                    </span>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="5" class="text-center">No subscription history</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
