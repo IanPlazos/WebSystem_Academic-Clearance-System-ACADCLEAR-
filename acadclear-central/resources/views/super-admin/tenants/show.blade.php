@@ -50,11 +50,32 @@
                         <code>{{ $tenant->database }}</code>
                     </div>
                 </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>Login Link:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <input type="text" class="form-control form-control-sm" id="loginUrl" value="http://{{ $tenant->slug }}.localhost:8000" readonly>
+                            <button class="btn btn-outline-primary btn-sm" type="button" onclick="copyToClipboard('loginUrl')">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                            <a href="http://{{ $tenant->slug }}.localhost:8000" target="_blank" class="btn btn-primary btn-sm">
+                                <i class="fas fa-external-link-alt"></i> Open
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <strong>Status:</strong>
+                        <strong>Admin Email:</strong>
                     </div>
+                    <div class="col-md-8">
+                        <code>{{ $tenant->settings['admin_email'] ?? 'N/A' }}</code>
+                    </div>
+                </div>
                     <div class="col-md-8">
                         <span class="badge bg-{{ $tenant->status == 'active' ? 'success' : 'warning' }}">
                             {{ ucfirst($tenant->status) }}
@@ -111,9 +132,17 @@
                 
                 <form action="{{ route('super-admin.tenants.toggle-status', $tenant) }}" method="POST">
                     @csrf
-                    <button type="submit" class="btn btn-{{ $tenant->status == 'active' ? 'warning' : 'success' }} btn-block w-100">
+                    <button type="submit" class="btn btn-{{ $tenant->status == 'active' ? 'warning' : 'success' }} btn-block w-100 mb-2">
                         <i class="fas fa-{{ $tenant->status == 'active' ? 'pause' : 'play' }}"></i>
                         {{ $tenant->status == 'active' ? 'Suspend' : 'Activate' }} University
+                    </button>
+                </form>
+
+                <form action="{{ route('super-admin.tenants.destroy', $tenant) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this university? This action cannot be undone.');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger btn-block w-100">
+                        <i class="fas fa-trash"></i> Delete University
                     </button>
                 </form>
             </div>
@@ -164,4 +193,25 @@
         </div>
     </div>
 </div>
+
+<script>
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    const text = element.value;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target.closest('button');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-outline-primary');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-primary');
+        }, 2000);
+    });
+}
+</script>
 @endsection

@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\College;
 use App\Models\Department;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 
 class DepartmentController extends Controller
 {
@@ -13,7 +14,7 @@ class DepartmentController extends Controller
      */
     public function index()
     {
-        $departments = Department::with('college')->get();
+        $departments = Department::with('college')->withCount('staff')->get();
         return view('admin.departments.index', compact('departments'));
     }
 
@@ -45,8 +46,9 @@ class DepartmentController extends Controller
     /**
      * Show form to edit department
      */
-    public function edit(Department $department)
+    public function edit($department)
     {
+        $department = Department::findOrFail($department);
         $colleges = College::all();
         return view('admin.departments.edit', compact('department', 'colleges'));
     }
@@ -54,8 +56,10 @@ class DepartmentController extends Controller
     /**
      * Update the specified department
      */
-    public function update(Request $request, Department $department)
+    public function update(Request $request, $department)
     {
+        $department = Department::findOrFail($department);
+
         $validated = $request->validate([
             'college_id' => 'required|exists:colleges,id',
             'name' => 'required|string|max:255|unique:departments,name,' . $department->id . ',id,college_id,' . $request->college_id
@@ -70,15 +74,22 @@ class DepartmentController extends Controller
     /**
      * Remove the specified department
      */
-    public function destroy(Department $department)
+    public function destroy($department)
     {
+        $department = Department::findOrFail($department);
+
         // Check if department has staff
-        if ($department->staff()->count() > 0) {
+        if ($department->staff()->exists()) {
             return redirect()->route('admin.departments.index')
                 ->with('error', 'Cannot delete department with assigned staff.');
         }
 
-        $department->delete();
+        try {
+            $department->delete();
+        } catch (QueryException $e) {
+            return redirect()->route('admin.departments.index')
+                ->with('error', 'Cannot delete department because it is linked to existing records.');
+        }
 
         return redirect()->route('admin.departments.index')
             ->with('success', 'Department deleted successfully.');

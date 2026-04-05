@@ -106,11 +106,12 @@ class SubscriptionController extends Controller
         ]);
 
         $plan = Plan::find($validated['plan_id']);
+        $months = (int) $validated['months'];
         
         $newSubscription = $subscription->tenant->subscriptions()->create([
             'plan_id' => $plan->id,
             'starts_at' => now(),
-            'ends_at' => now()->addMonths($validated['months']),
+            'ends_at' => now()->addMonths($months),
             'status' => 'active',
             'amount_paid' => $validated['amount_paid'],
             'payment_method' => $validated['payment_method'],

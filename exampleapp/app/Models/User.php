@@ -14,6 +14,15 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
+     * Get the connection that should be used for the model.
+     */
+    public function getConnectionName()
+    {
+        // Use the current default connection (will be switched to 'tenant' by middleware)
+        return config('database.default');
+    }
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>

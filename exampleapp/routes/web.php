@@ -1,11 +1,49 @@
 <?php
 
+
+
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 
-Route::get('/', function () {
-    return view('auth.login');
+// Test TenantService - Temporary route for testing
+Route::get('/test-tenant', function () {
+    $tenantService = app(\App\Services\TenantService::class);
+    
+    $tenantSlug = $tenantService->getCurrentTenant();
+    $isActive = $tenantService->isTenantActive($tenantSlug);
+    
+    return [
+        'tenant_slug' => $tenantSlug,
+        'is_active' => $isActive,
+        'host' => request()->getHost(),
+        'full_url' => request()->fullUrl(),
+        'central_app_url' => env('CENTRAL_APP_URL'),
+        'message' => 'TenantService is working!'
+    ];
 });
+
+// Test database switching
+Route::get('/test-db', function () {
+    return [
+        'current_database' => DB::connection()->getDatabaseName(),
+        'tenant_slug' => request()->attributes->get('tenant_slug'),
+        'tenant_details' => request()->attributes->get('tenant_details'),
+    ];
+});
+
+Route::get('/', [LandingController::class, 'index'])->name('landing.index');
+Route::middleware('guest')->post('/plan-request', [LandingController::class, 'store'])->name('landing.store');
+
+// Tenant suspended pages (used by CheckTenantStatus middleware)
+Route::get('/suspended', function () {
+    return view('errors.tenant-suspended');
+})->name('tenant.suspended');
+
+Route::get('/suspended/page', function () {
+    return view('errors.tenant-suspended');
+})->name('tenant.suspended.page');
 
 // Authenticated routes
 Route::middleware(['auth'])->group(function () {
@@ -29,6 +67,9 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:school_admin'])->prefix('admin')->name('admin.')->group(function () {
         // Dashboard
         Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+
+        // Plan Requests
+        Route::get('/plan-requests', [App\Http\Controllers\Admin\PlanRequestController::class, 'index'])->name('plan-requests.index');
         
         // College Management
         Route::resource('colleges', App\Http\Controllers\Admin\CollegeController::class);

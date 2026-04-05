@@ -19,10 +19,32 @@
 
     <!-- Custom styles for this template-->
     <link href="{{ asset('css/sb-admin-2.min.css') }}" rel="stylesheet">
+    <style>
+        @media (min-width: 768px) {
+            #accordionSidebar {
+                position: sticky;
+                top: 0;
+                height: 100vh;
+                overflow-y: auto;
+                flex-shrink: 0;
+            }
+
+            #content-wrapper {
+                min-height: 100vh;
+            }
+        }
+    </style>
 
 </head>
 
 <body id="page-top">
+
+    <!-- Debug - Remove after testing -->
+    @if(isset($currentTenant))
+    <div style="display:none;">
+        Tenant: {{ json_encode($currentTenant) }}
+    </div>
+    @endif
 
     <!-- Page Wrapper -->
     <div id="wrapper">
@@ -98,6 +120,7 @@
                         <i class="fas fa-fw fa-file-alt"></i>
                         <span>Reports</span></a>
                 </li>
+
             @elseif($user->role === 'staff')
                 <!-- Divider -->
                 <hr class="sidebar-divider">
@@ -185,6 +208,54 @@
 
                     <!-- Topbar Navbar -->
                     <ul class="navbar-nav ml-auto">
+
+                        <!-- Tenant Information - NEW -->
+                        @if(isset($currentTenant) && $currentTenant)
+                        <li class="nav-item dropdown no-arrow mx-1">
+                            <a class="nav-link dropdown-toggle" href="#" id="tenantDropdown" role="button"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-building fa-fw text-primary"></i>
+                                <span class="d-none d-lg-inline text-gray-600 small ml-1">{{ Str::limit($currentTenant['name'] ?? 'University', 20) }}</span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="tenantDropdown">
+                                <div class="dropdown-header bg-primary text-white">
+                                    <i class="fas fa-building"></i> {{ $currentTenant['name'] ?? 'University' }}
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <div class="px-3 py-2">
+                                    <small><i class="fas fa-tag"></i> Plan: <strong>{{ $currentTenant['plan']['name'] ?? $currentTenant['plan'] ?? 'N/A' }}</strong></small>
+                                </div>
+                                @if(isset($currentTenant['subscription']['ends_at']))
+                                <div class="px-3 py-2">
+                                    <small><i class="fas fa-calendar"></i> Expires: {{ \Carbon\Carbon::parse($currentTenant['subscription']['ends_at'])->format('M d, Y') }}</small>
+                                </div>
+                                @elseif(isset($currentTenant['subscription_ends_at']))
+                                <div class="px-3 py-2">
+                                    <small><i class="fas fa-calendar"></i> Expires: {{ \Carbon\Carbon::parse($currentTenant['subscription_ends_at'])->format('M d, Y') }}</small>
+                                </div>
+                                @endif
+                                <div class="px-3 py-2">
+                                    <small><i class="fas fa-info-circle"></i> Status: 
+                                        @if(($currentTenant['is_active'] ?? true) && ($currentTenant['status'] ?? 'active') === 'active')
+                                            <span class="text-success">Active</span>
+                                        @else
+                                            <span class="text-danger">Inactive</span>
+                                        @endif
+                                    </small>
+                                </div>
+                                @if(isset($currentTenant['database']))
+                                <div class="px-3 py-2">
+                                    <small><i class="fas fa-database"></i> Database: {{ $currentTenant['database'] }}</small>
+                                </div>
+                                @endif
+                                @if(isset($currentTenant['slug']))
+                                <div class="px-3 py-2">
+                                    <small><i class="fas fa-link"></i> ID: {{ $currentTenant['slug'] }}</small>
+                                </div>
+                                @endif
+                            </div>
+                        </li>
+                        @endif
 
                         <!-- Nav Item - Search Dropdown (Visible Only XS) -->
                         <li class="nav-item dropdown no-arrow d-sm-none">
@@ -371,7 +442,7 @@
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
-                        <span>Copyright &copy; Your Website 2021</span>
+                        <span>Copyright &copy; AcadClear {{ date('Y') }}</span>
                     </div>
                 </div>
             </footer>

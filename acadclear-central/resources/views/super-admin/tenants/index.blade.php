@@ -48,7 +48,7 @@
                         <th>ID</th>
                         <th>University</th>
                         <th>Domain</th>
-                        <th>Database</th>
+                        <th>Login Link</th>
                         <th>Plan</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -60,7 +60,11 @@
                         <td>{{ $tenant->id }}</td>
                         <td><strong>{{ $tenant->name }}</strong></td>
                         <td>{{ $tenant->domain }}</td>
-                        <td><code>{{ $tenant->database }}</code></td>
+                        <td>
+                            <a href="http://{{ $tenant->slug }}.localhost:8000" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-external-link-alt"></i> Login
+                            </a>
+                        </td>
                         <td>
                             @if($tenant->activeSubscription)
                                 <span class="badge bg-info">{{ $tenant->activeSubscription->plan->name }}</span>

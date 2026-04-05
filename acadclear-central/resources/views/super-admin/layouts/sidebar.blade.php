@@ -33,6 +33,13 @@
         </a>
     </li>
 
+    <li class="nav-item {{ request()->routeIs('super-admin.plan-requests.*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('super-admin.plan-requests.index') }}">
+            <i class="fas fa-fw fa-inbox"></i>
+            <span>Plan Requests</span>
+        </a>
+    </li>
+
     <li class="nav-item {{ request()->routeIs('super-admin.subscriptions.*') ? 'active' : '' }}">
         <a class="nav-link" href="{{ route('super-admin.subscriptions.index') }}">
             <i class="fas fa-fw fa-credit-card"></i>

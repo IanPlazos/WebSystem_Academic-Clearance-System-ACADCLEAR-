@@ -227,8 +227,12 @@ class UserController extends Controller
     /**
      * Get departments by college (AJAX)
      */
-    public function getDepartments(College $college)
+    public function getDepartments($college)
     {
-        return response()->json($college->departments);
+        $departments = Department::where('college_id', $college)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json($departments);
     }
 }

@@ -6,6 +6,7 @@ use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -41,6 +42,7 @@ class LoginRequest extends FormRequest
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
+        $this->validateCaptchaChallenge();
 
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
@@ -82,5 +84,56 @@ class LoginRequest extends FormRequest
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+    }
+
+    /**
+     * Validate either Google reCAPTCHA token or local fallback checkbox.
+     *
+     * @throws ValidationException
+     */
+    protected function validateCaptchaChallenge(): void
+    {
+        $siteKey = (string) config('services.recaptcha.site_key');
+        $secretKey = (string) config('services.recaptcha.secret_key');
+
+        if ($siteKey !== '' && $secretKey !== '') {
+            $recaptchaToken = (string) $this->input('g-recaptcha-response');
+
+            if ($recaptchaToken === '') {
+                throw ValidationException::withMessages([
+                    'g-recaptcha-response' => 'Please complete the reCAPTCHA challenge.',
+                ]);
+            }
+
+            try {
+                $verifyResponse = Http::asForm()
+                    ->timeout(10)
+                    ->post('https://www.google.com/recaptcha/api/siteverify', [
+                        'secret' => $secretKey,
+                        'response' => $recaptchaToken,
+                        'remoteip' => $this->ip(),
+                    ]);
+
+                if (! $verifyResponse->ok() || ! data_get($verifyResponse->json(), 'success', false)) {
+                    throw ValidationException::withMessages([
+                        'g-recaptcha-response' => 'Captcha verification failed. Please try again.',
+                    ]);
+                }
+            } catch (ValidationException $e) {
+                throw $e;
+            } catch (\Throwable $e) {
+                throw ValidationException::withMessages([
+                    'g-recaptcha-response' => 'Captcha service is temporarily unavailable. Please try again.',
+                ]);
+            }
+
+            return;
+        }
+
+        if (! $this->boolean('not_robot')) {
+            throw ValidationException::withMessages([
+                'not_robot' => 'Please confirm you are not a robot.',
+            ]);
+        }
     }
 }

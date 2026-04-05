@@ -47,7 +47,7 @@ class ClearanceController extends Controller
     /**
      * Get clearance summary for API
      */
-    public function summary()
+    public function summary(Request $request)
     {
         $student = auth()->user();
         
@@ -72,6 +72,20 @@ class ClearanceController extends Controller
             })
         ];
 
-        return response()->json($summary);
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json($summary);
+        }
+
+        return view('student.clearances.summary', [
+            'summary' => $summary,
+            'clearances' => $clearances,
+            'stats' => [
+                'total' => $summary['total'],
+                'approved' => $summary['approved'],
+                'pending' => $summary['pending'],
+                'rejected' => $summary['rejected'],
+                'progress' => $summary['progress'],
+            ],
+        ]);
     }
 }

@@ -125,8 +125,8 @@
                                 
                                 <button class="btn btn-danger btn-sm reject-btn" 
                                         data-id="{{ $clearance->id }}"
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#rejectModal{{ $clearance->id }}">
+                                        type="button"
+                                        onclick="rejectClearance({{ $clearance->id }})">
                                     <i class="fas fa-times"></i>
                                 </button>
                             @else
@@ -253,6 +253,43 @@
                 }
             });
         }
+    }
+
+    // Reject single clearance
+    function rejectClearance(id) {
+        var remarks = prompt('Please provide the reason for rejection:');
+
+        if (remarks === null) {
+            return;
+        }
+
+        remarks = remarks.trim();
+
+        if (!remarks) {
+            alert('Remarks are required to reject a clearance.');
+            return;
+        }
+
+        fetch('/staff/clearances/' + id + '/reject', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ remarks: remarks })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + (data.message || 'Unable to reject clearance'));
+            }
+        })
+        .catch(() => {
+            alert('Error: Unable to reject clearance');
+        });
     }
 </script>
 @endpush

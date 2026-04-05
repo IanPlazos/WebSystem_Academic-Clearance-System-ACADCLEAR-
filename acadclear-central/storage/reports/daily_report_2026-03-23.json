@@ -1,0 +1,27 @@
+{
+    "generated_at": "2026-03-23 16:16:50",
+    "date": "2026-03-22",
+    "statistics": {
+        "total_tenants": 3,
+        "active_tenants": 3,
+        "suspended_tenants": 0,
+        "expired_tenants": 0,
+        "total_subscriptions": 3,
+        "active_subscriptions": 3,
+        "revenue_today": 0,
+        "revenue_month": 0,
+        "revenue_year": 0
+    },
+    "subscriptions": {
+        "expiring_soon_count": 0,
+        "expiring_soon": [],
+        "expired_today_count": 0,
+        "expired_today": []
+    },
+    "recent_activity": {
+        "new_tenants_last_7_days": 3,
+        "new_subscriptions_last_7_days": 3,
+        "payments_last_7_days": 0,
+        "payments_last_7_days_total": 0
+    }
+}

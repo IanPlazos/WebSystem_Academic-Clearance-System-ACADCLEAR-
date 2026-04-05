@@ -133,7 +133,7 @@
             </div>
             <div class="card-body">
                 @if($subscription->status == 'active')
-                <button class="btn btn-primary btn-block w-100 mb-2" data-bs-toggle="modal" data-bs-target="#renewModal">
+                <button class="btn btn-primary btn-block w-100 mb-2" type="button" data-bs-toggle="modal" data-bs-target="#renewModal">
                     <i class="fas fa-sync"></i> Renew Subscription
                 </button>
                 @endif
@@ -184,14 +184,14 @@
 </div>
 
 <!-- Renew Modal -->
-<div class="modal fade" id="renewModal" tabindex="-1">
-    <div class="modal-dialog">
+<div class="modal fade" id="renewModal" tabindex="-1" role="dialog" aria-labelledby="renewModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
         <div class="modal-content">
             <form action="{{ route('super-admin.subscriptions.renew', $subscription) }}" method="POST">
                 @csrf
                 <div class="modal-header">
-                    <h5 class="modal-title">Renew Subscription</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="renewModalLabel">Renew Subscription</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">

@@ -25,8 +25,10 @@
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Slug *</label>
                     <input type="text" name="slug" class="form-control" value="{{ old('slug') }}" 
-                           placeholder="bukidnon-state-u" required>
-                    <small>Used in URL: https://slug.acadclear.com</small>
+                           placeholder="bukidnon-state-u" required
+                           pattern="^[a-z0-9][a-z0-9\-]*[a-z0-9]$"
+                           title="Lowercase letters, numbers and hyphens only (3-64 chars)">
+                    <small class="text-muted">Used in URL: https://slug.localhost:8000 - Only lowercase letters, numbers, and hyphens</small>
                 </div>
             </div>
 
@@ -54,6 +56,23 @@
                             </option>
                         @endforeach
                     </select>
+                </div>
+            </div>
+
+            <hr>
+            <h6 class="m-0 font-weight-bold text-primary mb-3">University Admin Account</h6>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">University Admin Email *</label>
+                    <input type="email" name="admin_email" class="form-control" value="{{ old('admin_email') }}"
+                           placeholder="admin@university.edu" required>
+                    <small>This account will be created in the university tenant system. Credentials and subscription details will be emailed automatically.</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">University Admin Password *</label>
+                    <input type="password" name="admin_password" class="form-control"
+                           placeholder="Minimum 8 characters" required>
                 </div>
             </div>
 

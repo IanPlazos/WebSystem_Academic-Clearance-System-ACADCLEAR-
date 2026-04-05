@@ -46,6 +46,7 @@
         <div class="md:w-[55%] bg-[#0f172a] flex flex-col p-8 md:p-10">
             {{-- Nav --}}
             <nav class="flex items-center justify-end gap-6 text-sm font-medium mb-8">
+                <a href="{{ route('landing.index') }}" class="text-white/80 hover:text-white transition">Plans</a>
                 <a href="#" class="text-white/80 hover:text-white transition">About Us</a>
                 <a href="#" class="text-white/80 hover:text-white transition">Prices</a>
                 <a href="#" class="text-white/80 hover:text-white transition">Contact</a>
@@ -60,6 +61,9 @@
 
                 <form method="POST" action="{{ route('login') }}" class="space-y-4">
                     @csrf
+                    @php
+                        $recaptchaSiteKey = config('services.recaptcha.site_key');
+                    @endphp
                     <div>
                         <x-text-input
                             id="email"
@@ -86,6 +90,26 @@
                             placeholder="Password"
                         />
                         <x-input-error :messages="$errors->get('password')" class="mt-1.5 text-red-300 text-sm" />
+                    </div>
+
+                    <div>
+                        @if (!empty($recaptchaSiteKey))
+                            <div class="g-recaptcha" data-sitekey="{{ $recaptchaSiteKey }}"></div>
+                            <x-input-error :messages="$errors->get('g-recaptcha-response')" class="mt-1.5 text-red-300 text-sm" />
+                        @else
+                            <label class="inline-flex items-center gap-2 cursor-pointer group">
+                                <input
+                                    id="not_robot"
+                                    type="checkbox"
+                                    name="not_robot"
+                                    value="1"
+                                    {{ old('not_robot') ? 'checked' : '' }}
+                                    class="w-4 h-4 rounded border-slate-500 bg-slate-800/50 text-blue-500 focus:ring-blue-500 focus:ring-offset-[#0f172a]"
+                                >
+                                <span class="text-sm text-white/80 group-hover:text-white">I'm not a robot</span>
+                            </label>
+                            <x-input-error :messages="$errors->get('not_robot')" class="mt-1.5 text-red-300 text-sm" />
+                        @endif
                     </div>
 
                     <div class="flex items-center justify-between gap-4">
@@ -125,4 +149,7 @@
         </div>
     </div>
 </div>
+@if (!empty(config('services.recaptcha.site_key')))
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+@endif
 @endsection
