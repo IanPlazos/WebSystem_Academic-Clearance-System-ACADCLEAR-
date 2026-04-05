@@ -4,6 +4,7 @@
 
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\ProfileController;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 
@@ -34,7 +35,10 @@ Route::get('/test-db', function () {
 });
 
 Route::get('/', [LandingController::class, 'index'])->name('landing.index');
-Route::middleware('guest')->post('/plan-request', [LandingController::class, 'store'])->name('landing.store');
+Route::middleware('guest')
+    ->post('/plan-request', [LandingController::class, 'store'])
+    ->withoutMiddleware([VerifyCsrfToken::class])
+    ->name('landing.store');
 
 // Tenant suspended pages (used by CheckTenantStatus middleware)
 Route::get('/suspended', function () {

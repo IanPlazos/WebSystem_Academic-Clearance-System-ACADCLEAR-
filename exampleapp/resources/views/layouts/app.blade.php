@@ -121,6 +121,13 @@
                         <span>Reports</span></a>
                 </li>
 
+                <!-- Nav Item - Settings -->
+                <li class="nav-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('profile.edit') }}">
+                        <i class="fas fa-fw fa-cog"></i>
+                        <span>Settings</span></a>
+                </li>
+
             @elseif($user->role === 'staff')
                 <!-- Divider -->
                 <hr class="sidebar-divider">
@@ -405,7 +412,11 @@
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ auth()->user()->name ?? 'User' }}</span>
-                                <i class="fas fa-user-circle fa-fw text-gray-400"></i>
+                                @if(auth()->user() && auth()->user()->profile_photo_url)
+                                    <img src="{{ auth()->user()->profile_photo_url }}" alt="User Avatar" class="img-profile rounded-circle" style="width:32px; height:32px; object-fit:cover;">
+                                @else
+                                    <i class="fas fa-user-circle fa-fw text-gray-400"></i>
+                                @endif
                             </a>
                             <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"

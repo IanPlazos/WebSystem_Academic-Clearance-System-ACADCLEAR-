@@ -34,7 +34,24 @@ class User extends Authenticatable
         'role',
         'college_id',
         'department_id',
+        'profile_photo_path',
     ];
+
+    /**
+     * Get the full URL for the user's profile photo.
+     */
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        if (!$this->profile_photo_path) {
+            return null;
+        }
+
+        if (str_starts_with($this->profile_photo_path, 'http://') || str_starts_with($this->profile_photo_path, 'https://')) {
+            return $this->profile_photo_path;
+        }
+
+        return asset('storage/' . ltrim($this->profile_photo_path, '/'));
+    }
 
     /**
      * The attributes that should be hidden for serialization.

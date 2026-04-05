@@ -21,7 +21,11 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-3">
                         <div class="mr-3">
-                            <i class="fas fa-user-circle fa-3x text-gray-300"></i>
+                            @if($user->profile_photo_url)
+                                <img src="{{ $user->profile_photo_url }}" alt="Profile Photo" class="rounded-circle" style="width:64px; height:64px; object-fit:cover;">
+                            @else
+                                <i class="fas fa-user-circle fa-3x text-gray-300"></i>
+                            @endif
                         </div>
                         <div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $user->name }}</div>
@@ -49,9 +53,24 @@
                     <h6 class="m-0 font-weight-bold text-primary">Edit Profile</h6>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ route('profile.update') }}">
+                    <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data">
                         @csrf
                         @method('patch')
+
+                        <div class="form-group">
+                            <label for="profile_photo">Profile Picture</label>
+                            <input
+                                id="profile_photo"
+                                name="profile_photo"
+                                type="file"
+                                class="form-control-file @error('profile_photo') is-invalid @enderror"
+                                accept="image/png,image/jpeg,image/webp"
+                            />
+                            <small class="form-text text-muted">Allowed: JPG, PNG, WEBP (max 2MB)</small>
+                            @error('profile_photo')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
 
                         <div class="form-group">
                             <label for="name">Name</label>
