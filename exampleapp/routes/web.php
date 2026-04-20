@@ -51,6 +51,16 @@ Route::get('/suspended/page', function () {
 
 // Authenticated routes
 Route::middleware(['auth'])->group(function () {
+
+    Route::get('/support/chat', [App\Http\Controllers\SupportChatController::class, 'index'])
+        ->middleware('permission:tenant.support_chat.access')
+        ->name('support.chat');
+    Route::get('/support/chat/messages', [App\Http\Controllers\SupportChatController::class, 'messages'])
+        ->middleware('permission:tenant.support_chat.access')
+        ->name('support.chat.messages');
+    Route::post('/support/chat/messages', [App\Http\Controllers\SupportChatController::class, 'store'])
+        ->middleware('permission:tenant.support_chat.access')
+        ->name('support.chat.store');
     
     // Generic dashboard redirect (by role)
     Route::get('/dashboard', function () {
@@ -67,8 +77,8 @@ Route::middleware(['auth'])->group(function () {
         return redirect()->route('profile.edit');
     })->name('dashboard');
 
-    // School Admin Routes (ALL admin routes go here)
-    Route::middleware(['role:school_admin,staff'])->prefix('admin')->name('admin.')->group(function () {
+    // Tenant Admin Routes (permission-driven)
+    Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
         // Dashboard
         Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])
             ->middleware('permission:tenant.dashboard.view')
@@ -81,11 +91,21 @@ Route::middleware(['auth'])->group(function () {
         
         // College Management
         Route::resource('colleges', App\Http\Controllers\Admin\CollegeController::class)
+            ->except(['index'])
             ->middleware('permission:tenant.colleges.manage');
+
+        Route::get('/colleges', [App\Http\Controllers\Admin\CollegeController::class, 'index'])
+            ->middleware('permission:tenant.colleges.manage')
+            ->name('colleges.index');
         
         // Department Management
         Route::resource('departments', App\Http\Controllers\Admin\DepartmentController::class)
+            ->except(['index'])
             ->middleware('permission:tenant.departments.manage');
+
+        Route::get('/departments', [App\Http\Controllers\Admin\DepartmentController::class, 'index'])
+            ->middleware('permission:tenant.departments.manage')
+            ->name('departments.index');
         
         // Student Management
         Route::get('/students', [App\Http\Controllers\Admin\UserController::class, 'students'])

@@ -14,15 +14,16 @@
             ->where('status', 'pending')
             ->count();
 
-        $recentMails = \App\Models\PlanRequest::query()
-            ->whereNotNull('email')
-            ->latest()
+        $recentMails = \App\Models\SupportMessage::query()
+            ->with('conversation:id,tenant_slug,tenant_name')
+            ->where('sender_type', 'tenant')
+            ->latest('created_at')
             ->take(5)
             ->get();
 
-        $mailCount = \App\Models\PlanRequest::query()
-            ->whereNotNull('email')
-            ->where('created_at', '>=', now()->subDay())
+        $mailCount = \App\Models\SupportMessage::query()
+            ->where('sender_type', 'tenant')
+            ->where('is_read', false)
             ->count();
     @endphp
 
@@ -73,18 +74,18 @@
             </a>
             <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
                 aria-labelledby="messagesDropdown">
-                <h6 class="dropdown-header">Mail</h6>
+                <h6 class="dropdown-header">Support Inbox</h6>
                 @forelse($recentMails as $mail)
-                    <a class="dropdown-item d-flex align-items-center" href="{{ route('super-admin.plan-requests.index') }}">
+                    <a class="dropdown-item d-flex align-items-center" href="{{ route('super-admin.support-chat.show', $mail->support_conversation_id) }}">
                         <div class="font-weight-bold">
-                            <div class="text-truncate">{{ \Illuminate\Support\Str::limit($mail->institution_name ?? $mail->tenant_name ?? 'Plan Request', 35) }}</div>
-                            <div class="small text-gray-500">{{ $mail->email }} • {{ $mail->created_at?->diffForHumans() ?? 'Just now' }}</div>
+                            <div class="text-truncate">{{ \Illuminate\Support\Str::limit($mail->conversation?->tenant_name ?? $mail->conversation?->tenant_slug ?? 'Tenant', 35) }}</div>
+                            <div class="small text-gray-500">{{ \Illuminate\Support\Str::limit($mail->message, 55) }} • {{ $mail->created_at?->diffForHumans() ?? 'Just now' }}</div>
                         </div>
                     </a>
                 @empty
                     <span class="dropdown-item text-center small text-gray-500">No mail items found</span>
                 @endforelse
-                <a class="dropdown-item text-center small text-gray-500" href="{{ route('super-admin.plan-requests.index') }}">View all mail</a>
+                <a class="dropdown-item text-center small text-gray-500" href="{{ route('super-admin.support-chat.index') }}">Open support inbox</a>
             </div>
         </li>
 

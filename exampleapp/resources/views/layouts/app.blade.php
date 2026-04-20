@@ -273,6 +273,17 @@
             @endif
 
             @if($user->role === 'school_admin')
+                @php
+                    $canManageColleges = $user->hasPermission('tenant.colleges.manage');
+                    $canManageDepartments = $user->hasPermission('tenant.departments.manage');
+                    $canManageStudents = $user->hasPermission('tenant.students.manage');
+                    $canManageStaff = $user->hasPermission('tenant.staff.manage');
+                    $canViewReports = $user->hasPermission('tenant.reports.view');
+                    $canViewClearances = $user->hasPermission('tenant.clearances.view');
+                    $canExportClearances = $user->hasPermission('tenant.clearances.export');
+                    $canManageProfile = $user->hasPermission('tenant.profile.manage');
+                @endphp
+
                 <!-- Divider -->
                 <hr class="sidebar-divider">
 
@@ -282,7 +293,7 @@
                 </div>
 
                 <!-- Nav Item - Colleges -->
-                @if($user->hasPermission('tenant.colleges.manage'))
+                @if($canManageColleges)
                     <li class="nav-item {{ request()->routeIs('admin.colleges.*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('admin.colleges.index') }}">
                             <i class="fas fa-fw fa-university"></i>
@@ -291,7 +302,7 @@
                 @endif
 
                 <!-- Nav Item - Departments -->
-                @if($user->hasPermission('tenant.departments.manage'))
+                @if($canManageDepartments)
                     <li class="nav-item {{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('admin.departments.index') }}">
                             <i class="fas fa-fw fa-building"></i>
@@ -300,7 +311,7 @@
                 @endif
 
                 <!-- Nav Item - Students -->
-                @if($user->hasPermission('tenant.students.manage'))
+                @if($canManageStudents)
                     <li class="nav-item {{ request()->routeIs('admin.students.*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('admin.students.index') }}">
                             <i class="fas fa-fw fa-users"></i>
@@ -309,16 +320,28 @@
                 @endif
 
                 <!-- Nav Item - Staff -->
-                @if($user->hasPermission('tenant.staff.manage'))
+                @if($canManageStaff)
                     <li class="nav-item {{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('admin.staff.index') }}">
                             <i class="fas fa-fw fa-user-tie"></i>
                             <span>Staff</span></a>
                     </li>
+
+                    <li class="nav-item {{ request()->routeIs('admin.staff.create') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.staff.create') }}">
+                            <i class="fas fa-fw fa-user-plus"></i>
+                            <span>Add Role</span></a>
+                    </li>
                 @endif
 
+                <hr class="sidebar-divider">
+
+                <div class="sidebar-heading">
+                    Operations
+                </div>
+
                 <!-- Nav Item - Reports -->
-                @if($user->hasPermission('tenant.reports.view'))
+                @if($canViewReports)
                     <li class="nav-item {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('admin.reports.index') }}">
                             <i class="fas fa-fw fa-file-alt"></i>
@@ -327,7 +350,7 @@
                 @endif
 
                 <!-- Nav Item - Clearances -->
-                @if($user->hasPermission('tenant.clearances.view'))
+                @if($canViewClearances)
                     <li class="nav-item {{ request()->routeIs('admin.clearances.*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('admin.clearances.index') }}">
                             <i class="fas fa-fw fa-list"></i>
@@ -336,7 +359,7 @@
                 @endif
 
                 <!-- Nav Item - Export -->
-                @if($user->hasPermission('tenant.clearances.export'))
+                @if($canExportClearances)
                     <li class="nav-item {{ request()->routeIs('admin.clearances.export') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('admin.clearances.export') }}">
                             <i class="fas fa-fw fa-download"></i>
@@ -344,8 +367,22 @@
                     </li>
                 @endif
 
+                <hr class="sidebar-divider">
+
+                <div class="sidebar-heading">
+                    Account
+                </div>
+
+                @if($user->hasPermission('tenant.support_chat.access'))
+                    <li class="nav-item {{ request()->routeIs('support.chat*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('support.chat') }}">
+                            <i class="fas fa-fw fa-headset"></i>
+                            <span>Support Chat</span></a>
+                    </li>
+                @endif
+
                 <!-- Nav Item - Settings -->
-                @if($user->hasPermission('tenant.profile.manage'))
+                @if($canManageProfile)
                     <li class="nav-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('profile.edit') }}">
                             <i class="fas fa-fw fa-cog"></i>
@@ -354,15 +391,27 @@
                 @endif
 
             @elseif($user->role === 'staff')
+                @php
+                    $canViewPlanRequests = $user->hasPermission('tenant.plan_requests.view');
+                    $canManageColleges = $user->hasPermission('tenant.colleges.manage');
+                    $canManageDepartments = $user->hasPermission('tenant.departments.manage');
+                    $canManageStudents = $user->hasPermission('tenant.students.manage');
+                    $canManageStaff = $user->hasPermission('tenant.staff.manage');
+                    $canViewReports = $user->hasPermission('tenant.reports.view');
+                    $canViewClearances = $user->hasPermission('tenant.clearances.view');
+                    $canExportClearances = $user->hasPermission('tenant.clearances.export');
+                    $canManageProfile = $user->hasPermission('tenant.profile.manage');
+                @endphp
+
                 <!-- Divider -->
                 <hr class="sidebar-divider">
 
                 <!-- Heading -->
                 <div class="sidebar-heading">
-                    Modules
+                    Management
                 </div>
 
-                @if($user->hasPermission('tenant.plan_requests.view'))
+                @if($canViewPlanRequests)
                     <li class="nav-item {{ request()->routeIs('admin.plan-requests.*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('admin.plan-requests.index') }}">
                             <i class="fas fa-fw fa-clipboard-list"></i>
@@ -371,7 +420,7 @@
                     </li>
                 @endif
 
-                @if($user->hasPermission('tenant.colleges.manage'))
+                @if($canManageColleges)
                     <li class="nav-item {{ request()->routeIs('admin.colleges.*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('admin.colleges.index') }}">
                             <i class="fas fa-fw fa-university"></i>
@@ -380,7 +429,7 @@
                     </li>
                 @endif
 
-                @if($user->hasPermission('tenant.departments.manage'))
+                @if($canManageDepartments)
                     <li class="nav-item {{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('admin.departments.index') }}">
                             <i class="fas fa-fw fa-building"></i>
@@ -389,7 +438,7 @@
                     </li>
                 @endif
 
-                @if($user->hasPermission('tenant.students.manage'))
+                @if($canManageStudents)
                     <li class="nav-item {{ request()->routeIs('admin.students.*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('admin.students.index') }}">
                             <i class="fas fa-fw fa-users"></i>
@@ -398,16 +447,29 @@
                     </li>
                 @endif
 
-                @if($user->hasPermission('tenant.staff.manage'))
+                @if($canManageStaff)
                     <li class="nav-item {{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('admin.staff.index') }}">
                             <i class="fas fa-fw fa-user-tie"></i>
                             <span>Staff</span>
                         </a>
                     </li>
+
+                    <li class="nav-item {{ request()->routeIs('admin.staff.create') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('admin.staff.create') }}">
+                            <i class="fas fa-fw fa-user-plus"></i>
+                            <span>Add Role</span>
+                        </a>
+                    </li>
                 @endif
 
-                @if($user->hasPermission('tenant.reports.view'))
+                <hr class="sidebar-divider">
+
+                <div class="sidebar-heading">
+                    Operations
+                </div>
+
+                @if($canViewReports)
                     <li class="nav-item {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('admin.reports.index') }}">
                             <i class="fas fa-fw fa-file-alt"></i>
@@ -416,7 +478,7 @@
                     </li>
                 @endif
 
-                @if($user->hasPermission('tenant.clearances.view'))
+                @if($canViewClearances)
                     <li class="nav-item {{ request()->routeIs('admin.clearances.*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('admin.clearances.index') }}">
                             <i class="fas fa-fw fa-list"></i>
@@ -425,7 +487,7 @@
                     </li>
                 @endif
 
-                @if($user->hasPermission('tenant.clearances.export'))
+                @if($canExportClearances)
                     <li class="nav-item {{ request()->routeIs('admin.clearances.export') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('admin.clearances.export') }}">
                             <i class="fas fa-fw fa-download"></i>
@@ -434,8 +496,22 @@
                     </li>
                 @endif
 
+                <hr class="sidebar-divider">
+
+                <div class="sidebar-heading">
+                    Account
+                </div>
+
+                @if($user->hasPermission('tenant.support_chat.access'))
+                    <li class="nav-item {{ request()->routeIs('support.chat*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('support.chat') }}">
+                            <i class="fas fa-fw fa-headset"></i>
+                            <span>Support Chat</span></a>
+                    </li>
+                @endif
+
                 <!-- Nav Item - Settings -->
-                @if($user->hasPermission('tenant.profile.manage'))
+                @if($canManageProfile)
                     <li class="nav-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('profile.edit') }}">
                             <i class="fas fa-fw fa-cog"></i>
@@ -466,6 +542,20 @@
                         <a class="nav-link" href="{{ route('student.clearances.summary') }}">
                             <i class="fas fa-fw fa-chart-bar"></i>
                             <span>Summary</span></a>
+                    </li>
+                @endif
+
+                <hr class="sidebar-divider">
+
+                <div class="sidebar-heading">
+                    Account
+                </div>
+
+                @if($user->hasPermission('tenant.support_chat.access'))
+                    <li class="nav-item {{ request()->routeIs('support.chat*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('support.chat') }}">
+                            <i class="fas fa-fw fa-headset"></i>
+                            <span>Support Chat</span></a>
                     </li>
                 @endif
             @endif
@@ -516,11 +606,17 @@
                         $topbarNotifications = collect();
                         $topbarMails = collect();
                         $topbarNotificationLink = '#';
-                        $topbarMailLink = '#';
+                        $topbarMailLink = route('support.chat');
+
+                        $tenantSlugForSupport = (string) (request()->attributes->get('tenant_slug') ?? data_get($currentTenant ?? null, 'slug', ''));
+                        if ($tenantSlugForSupport !== '') {
+                            $supportSummary = app(\App\Services\TenantService::class)->getSupportChatSummary($tenantSlugForSupport);
+                            $topbarMailCount = (int) ($supportSummary['unread_count'] ?? 0);
+                            $topbarMails = collect($supportSummary['recent_messages'] ?? []);
+                        }
 
                         if ($user->role === 'school_admin') {
                             $topbarNotificationLink = route('admin.clearances.index');
-                            $topbarMailLink = route('admin.students.index');
 
                             $topbarNotificationCount = \App\Models\Clearance::query()
                                 ->where('status', 'pending')
@@ -539,21 +635,8 @@
                                 ->take(5)
                                 ->get();
 
-                            $topbarMailCount = \App\Models\User::query()
-                                ->whereIn('role', ['student', 'staff'])
-                                ->where('college_id', $user->college_id)
-                                ->where('created_at', '>=', now()->subDay())
-                                ->count();
-
-                            $topbarMails = \App\Models\User::query()
-                                ->whereIn('role', ['student', 'staff'])
-                                ->where('college_id', $user->college_id)
-                                ->latest()
-                                ->take(5)
-                                ->get(['name', 'email', 'role', 'created_at']);
                         } elseif ($user->role === 'staff') {
                             $topbarNotificationLink = route('staff.dashboard');
-                            $topbarMailLink = route('staff.dashboard');
 
                             if ($user->office_role) {
                                 $topbarNotificationCount = \App\Models\ClearanceChecklistItem::query()
@@ -576,21 +659,8 @@
                                     ->get();
                             }
 
-                            $topbarMailCount = \App\Models\User::query()
-                                ->where('role', 'student')
-                                ->where('department_id', $user->department_id)
-                                ->where('created_at', '>=', now()->subDay())
-                                ->count();
-
-                            $topbarMails = \App\Models\User::query()
-                                ->where('role', 'student')
-                                ->where('department_id', $user->department_id)
-                                ->latest()
-                                ->take(5)
-                                ->get(['name', 'email', 'created_at']);
                         } else {
                             $topbarNotificationLink = route('student.clearances.index');
-                            $topbarMailLink = route('student.clearances.index');
 
                             $topbarNotificationCount = \App\Models\Clearance::query()
                                 ->where('student_id', $user->id)
@@ -605,19 +675,6 @@
                                 ->take(5)
                                 ->get();
 
-                            $topbarMailCount = \App\Models\Clearance::query()
-                                ->where('student_id', $user->id)
-                                ->whereNotNull('remarks')
-                                ->where('updated_at', '>=', now()->subDays(7))
-                                ->count();
-
-                            $topbarMails = \App\Models\Clearance::query()
-                                ->with('department:id,name')
-                                ->where('student_id', $user->id)
-                                ->whereNotNull('remarks')
-                                ->latest('updated_at')
-                                ->take(5)
-                                ->get();
                         }
                     @endphp
                     <ul class="navbar-nav ml-auto">
@@ -752,7 +809,7 @@
                             <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                 aria-labelledby="messagesDropdown">
                                 <h6 class="dropdown-header">
-                                    Message Center
+                                    Support Inbox
                                 </h6>
                                 @forelse($topbarMails as $mailItem)
                                     <a class="dropdown-item d-flex align-items-center" href="{{ $topbarMailLink }}">
@@ -760,19 +817,14 @@
                                             <i class="fas fa-envelope fa-lg text-primary"></i>
                                         </div>
                                         <div class="font-weight-bold">
-                                            @if($user->role === 'student')
-                                                <div class="text-truncate">{{ \Illuminate\Support\Str::limit($mailItem->remarks ?? 'Clearance update', 55) }}</div>
-                                                <div class="small text-gray-500">{{ $mailItem->department?->name ?? 'Department' }} · {{ $mailItem->updated_at?->diffForHumans() ?? 'Just now' }}</div>
-                                            @else
-                                                <div class="text-truncate">{{ $mailItem->name ?? 'User Account' }} ({{ ucfirst($mailItem->role ?? 'user') }})</div>
-                                                <div class="small text-gray-500">{{ $mailItem->email ?? 'No email' }} · {{ $mailItem->created_at?->diffForHumans() ?? 'Just now' }}</div>
-                                            @endif
+                                            <div class="text-truncate">{{ \Illuminate\Support\Str::limit(data_get($mailItem, 'sender_name', 'Super Admin'), 45) }}</div>
+                                            <div class="small text-gray-500">{{ \Illuminate\Support\Str::limit(data_get($mailItem, 'message', 'Support message'), 60) }}</div>
                                         </div>
                                     </a>
                                 @empty
-                                    <span class="dropdown-item text-center small text-gray-500">No messages right now</span>
+                                    <span class="dropdown-item text-center small text-gray-500">No support messages right now</span>
                                 @endforelse
-                                <a class="dropdown-item text-center small text-gray-500" href="{{ $topbarMailLink }}">Read More Messages</a>
+                                <a class="dropdown-item text-center small text-gray-500" href="{{ $topbarMailLink }}">Open support chat</a>
                             </div>
                         </li>
 

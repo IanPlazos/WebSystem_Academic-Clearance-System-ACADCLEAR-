@@ -17,6 +17,7 @@ return [
         'student' => [
             'tenant.dashboard.view_own',
             'tenant.student.clearances.view',
+            'tenant.support_chat.access',
             'tenant.profile.manage',
         ],
     ],
@@ -54,6 +55,9 @@ return [
         ],
         'profile' => [
             'tenant.profile.manage',
+        ],
+        'support_chat' => [
+            'tenant.support_chat.access',
         ],
     ],
 ];

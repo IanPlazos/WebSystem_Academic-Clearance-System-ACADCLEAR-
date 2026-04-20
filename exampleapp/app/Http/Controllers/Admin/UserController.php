@@ -173,20 +173,24 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'college_id' => 'required|exists:colleges,id',
             'department_id' => 'required|exists:departments,id',
-            'office_role' => ['required', Rule::in(array_keys(User::officeRoles()))],
+            'office_role' => ['required', Rule::in(array_merge(array_keys(User::officeRoles()), ['custom']))],
+            'custom_office_role' => ['nullable', 'required_if:office_role,custom', 'string', 'max:255'],
             'modules' => ['nullable', 'array'],
             'modules.*' => ['string', Rule::in(array_keys(config('rbac.modules', [])))],
         ]);
+
+        $validated['office_role'] = $this->normalizeOfficeRole(
+            $validated['office_role'],
+            $validated['custom_office_role'] ?? null
+        );
 
         $plainPassword = Str::password(12, letters: true, numbers: true, symbols: false, spaces: false);
         $validated['role'] = 'staff';
         $validated['password'] = Hash::make($plainPassword);
 
-        if (Schema::hasColumn('users', 'permissions')) {
-            $validated['permissions'] = $this->resolveStaffPermissions($validated['modules'] ?? []);
-        }
+        $validated['permissions'] = $this->resolveStaffPermissions($validated['modules'] ?? []);
 
-        unset($validated['modules']);
+        unset($validated['modules'], $validated['custom_office_role']);
 
         $staff = User::create($validated);
 
@@ -243,16 +247,21 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'college_id' => 'required|exists:colleges,id',
             'department_id' => 'required|exists:departments,id',
-            'office_role' => ['required', Rule::in(array_keys(User::officeRoles()))],
+            'office_role' => ['required', Rule::in(array_merge(array_keys(User::officeRoles()), ['custom']))],
+            'custom_office_role' => ['nullable', 'required_if:office_role,custom', 'string', 'max:255'],
             'modules' => ['nullable', 'array'],
             'modules.*' => ['string', Rule::in(array_keys(config('rbac.modules', [])))],
         ]);
 
-        if (Schema::hasColumn('users', 'permissions')) {
-            $validated['permissions'] = $this->resolveStaffPermissions($validated['modules'] ?? []);
-        }
+        $validated['office_role'] = $this->normalizeOfficeRole(
+            $validated['office_role'],
+            $validated['custom_office_role'] ?? null
+        );
 
-        unset($validated['modules']);
+
+        $validated['permissions'] = $this->resolveStaffPermissions($validated['modules'] ?? []);
+
+        unset($validated['modules'], $validated['custom_office_role']);
 
         $user->update($validated);
 
@@ -325,8 +334,7 @@ class UserController extends Controller
                 continue;
             }
 
-            $matches = array_intersect($modulePermissions, $permissions);
-            if (!empty($matches)) {
+            if (in_array($moduleKey, $permissions, true) || !empty(array_intersect($modulePermissions, $permissions))) {
                 $selected[] = $moduleKey;
             }
         }
@@ -345,5 +353,25 @@ class UserController extends Controller
         });
 
         Schema::getConnection()->flushQueryLog();
+    }
+
+    private function normalizeOfficeRole(string $officeRole, ?string $customOfficeRole = null): string
+    {
+        if ($officeRole !== 'custom') {
+            return $officeRole;
+        }
+
+        $label = trim((string) $customOfficeRole);
+        if ($label === '') {
+            return 'custom_role';
+        }
+
+        $slug = Str::slug($label, '_');
+
+        if ($slug === '') {
+            return 'custom_role_' . substr(md5($label), 0, 8);
+        }
+
+        return $slug;
     }
 }

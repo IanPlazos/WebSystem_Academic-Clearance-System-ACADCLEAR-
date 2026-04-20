@@ -41,6 +41,15 @@ Route::middleware(['auth'])->group(function () {
             ->name('plan-requests.approve');
         Route::post('/plan-requests/{planRequest}/reject', [App\Http\Controllers\SuperAdmin\PlanRequestController::class, 'reject'])
             ->name('plan-requests.reject');
+
+        Route::get('/support-chat', [App\Http\Controllers\SuperAdmin\SupportChatController::class, 'index'])
+            ->name('support-chat.index');
+        Route::get('/support-chat/{conversation}', [App\Http\Controllers\SuperAdmin\SupportChatController::class, 'show'])
+            ->name('support-chat.show');
+        Route::get('/support-chat/{conversation}/messages', [App\Http\Controllers\SuperAdmin\SupportChatController::class, 'messages'])
+            ->name('support-chat.messages');
+        Route::post('/support-chat/{conversation}/messages', [App\Http\Controllers\SuperAdmin\SupportChatController::class, 'store'])
+            ->name('support-chat.store');
         
         // Tenant Management
         Route::resource('tenants', App\Http\Controllers\SuperAdmin\TenantController::class);

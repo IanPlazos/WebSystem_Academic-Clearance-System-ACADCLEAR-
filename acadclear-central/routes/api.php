@@ -147,6 +147,9 @@ Route::prefix('tenants')->group(function () {
 });
 
 Route::post('/plan-requests', [App\Http\Controllers\SuperAdmin\PlanRequestController::class, 'store']);
+Route::get('/support-chat/{tenantSlug}/summary', [App\Http\Controllers\Api\SupportChatApiController::class, 'summary']);
+Route::get('/support-chat/{tenantSlug}/messages', [App\Http\Controllers\Api\SupportChatApiController::class, 'messages']);
+Route::post('/support-chat/{tenantSlug}/messages', [App\Http\Controllers\Api\SupportChatApiController::class, 'store']);
 
 // Global API health check
 Route::get('/health', function () {

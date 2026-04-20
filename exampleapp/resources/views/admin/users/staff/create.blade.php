@@ -118,8 +118,25 @@
                                     {{ $roleLabel }}
                                 </option>
                             @endforeach
+                            <option value="custom" {{ old('office_role') === 'custom' ? 'selected' : '' }}>Other (Add New Role)</option>
                         </select>
                         @error('office_role')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="col-md-6" id="customOfficeRoleWrapper" style="display: {{ old('office_role') === 'custom' ? 'block' : 'none' }};">
+                    <div class="mb-3">
+                        <label for="custom_office_role" class="font-weight-bold small text-uppercase text-gray-700 mb-2">New Office Role <span class="text-danger">*</span></label>
+                        <input type="text"
+                               class="form-control @error('custom_office_role') is-invalid @enderror"
+                               id="custom_office_role"
+                               name="custom_office_role"
+                               value="{{ old('custom_office_role') }}"
+                               placeholder="e.g., Clinic Officer"
+                               maxlength="255">
+                        @error('custom_office_role')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
@@ -188,6 +205,25 @@
         var oldDepartmentId = '{{ old('department_id') }}';
         var selectAllModulesBtn = document.getElementById('selectAllModulesCreate');
         var clearAllModulesBtn = document.getElementById('clearAllModulesCreate');
+        var officeRoleSelect = document.getElementById('office_role');
+        var customOfficeRoleWrapper = document.getElementById('customOfficeRoleWrapper');
+        var customOfficeRoleInput = document.getElementById('custom_office_role');
+
+        function toggleCustomOfficeRole() {
+            if (!officeRoleSelect || !customOfficeRoleWrapper) {
+                return;
+            }
+
+            var isCustom = officeRoleSelect.value === 'custom';
+            customOfficeRoleWrapper.style.display = isCustom ? 'block' : 'none';
+
+            if (customOfficeRoleInput) {
+                customOfficeRoleInput.required = isCustom;
+                if (!isCustom) {
+                    customOfficeRoleInput.value = '';
+                }
+            }
+        }
 
         function resetDepartment(message) {
             departmentSelect.innerHTML = '<option value="">' + message + '</option>';
@@ -232,6 +268,9 @@
         if (collegeSelect.value) {
             loadDepartments(collegeSelect.value, oldDepartmentId);
         }
+
+        officeRoleSelect?.addEventListener('change', toggleCustomOfficeRole);
+        toggleCustomOfficeRole();
 
         function setAllModules(checked) {
             document.querySelectorAll('.staff-module-checkbox').forEach(function (checkbox) {

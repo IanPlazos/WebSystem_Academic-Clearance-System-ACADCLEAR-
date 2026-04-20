@@ -5,6 +5,13 @@
 @section('content')
 @php
     $canManageStaff = auth()->user()->hasPermission('tenant.staff.manage');
+    $selectedOfficeRole = old('office_role', $user->office_role);
+    $customOfficeRoleValue = old('custom_office_role');
+
+    if ($selectedOfficeRole !== 'custom' && !array_key_exists($selectedOfficeRole, $officeRoles)) {
+        $customOfficeRoleValue = $customOfficeRoleValue ?: ucwords(str_replace('_', ' ', $selectedOfficeRole));
+        $selectedOfficeRole = 'custom';
+    }
 @endphp
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <div>
@@ -105,12 +112,29 @@
                                 required>
                             <option value="">Select Office Role</option>
                             @foreach($officeRoles as $roleKey => $roleLabel)
-                                <option value="{{ $roleKey }}" {{ old('office_role', $user->office_role) === $roleKey ? 'selected' : '' }}>
+                                <option value="{{ $roleKey }}" {{ $selectedOfficeRole === $roleKey ? 'selected' : '' }}>
                                     {{ $roleLabel }}
                                 </option>
                             @endforeach
+                            <option value="custom" {{ $selectedOfficeRole === 'custom' ? 'selected' : '' }}>Other (Add New Role)</option>
                         </select>
                         @error('office_role')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="col-md-6" id="customOfficeRoleWrapper" style="display: {{ $selectedOfficeRole === 'custom' ? 'block' : 'none' }};">
+                    <div class="mb-3">
+                        <label for="custom_office_role" class="form-label">New Office Role <span class="text-danger">*</span></label>
+                        <input type="text"
+                               class="form-control @error('custom_office_role') is-invalid @enderror"
+                               id="custom_office_role"
+                               name="custom_office_role"
+                               value="{{ $customOfficeRoleValue }}"
+                               placeholder="e.g., Clinic Officer"
+                               maxlength="255">
+                        @error('custom_office_role')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
@@ -183,6 +207,25 @@
         var currentDepartment = {{ $user->department_id }};
         var selectAllModulesBtn = document.getElementById('selectAllModulesEdit');
         var clearAllModulesBtn = document.getElementById('clearAllModulesEdit');
+        var officeRoleSelect = document.getElementById('office_role');
+        var customOfficeRoleWrapper = document.getElementById('customOfficeRoleWrapper');
+        var customOfficeRoleInput = document.getElementById('custom_office_role');
+
+        function toggleCustomOfficeRole() {
+            if (!officeRoleSelect || !customOfficeRoleWrapper) {
+                return;
+            }
+
+            var isCustom = officeRoleSelect.value === 'custom';
+            customOfficeRoleWrapper.style.display = isCustom ? 'block' : 'none';
+
+            if (customOfficeRoleInput) {
+                customOfficeRoleInput.required = isCustom;
+                if (!isCustom) {
+                    customOfficeRoleInput.value = '';
+                }
+            }
+        }
 
         function loadDepartments(collegeId) {
             if (!collegeId) {
@@ -213,6 +256,9 @@
         if (collegeSelect.value) {
             loadDepartments(collegeSelect.value);
         }
+
+        officeRoleSelect?.addEventListener('change', toggleCustomOfficeRole);
+        toggleCustomOfficeRole();
 
         function setAllModules(checked) {
             document.querySelectorAll('.staff-module-checkbox').forEach(function (checkbox) {
