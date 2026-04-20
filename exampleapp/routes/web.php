@@ -197,6 +197,41 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:staff'])->prefix('staff')->name('staff.')->group(function () {
         // Dashboard
         Route::get('/dashboard', [App\Http\Controllers\Staff\DashboardController::class, 'index'])->name('dashboard');
+
+        // Staff-scoped aliases for sidebar modules (keep URL under /staff)
+        Route::get('/plan-requests', [App\Http\Controllers\Admin\PlanRequestController::class, 'index'])
+            ->middleware('permission:tenant.plan_requests.view')
+            ->name('plan-requests.index');
+
+        Route::get('/colleges', [App\Http\Controllers\Admin\CollegeController::class, 'index'])
+            ->middleware('permission:tenant.colleges.manage')
+            ->name('colleges.index');
+
+        Route::get('/departments', [App\Http\Controllers\Admin\DepartmentController::class, 'index'])
+            ->middleware('permission:tenant.departments.manage')
+            ->name('departments.index');
+
+        Route::get('/students', [App\Http\Controllers\Admin\UserController::class, 'students'])
+            ->middleware('permission:tenant.students.manage')
+            ->name('students.index');
+
+        Route::get('/staff', [App\Http\Controllers\Admin\UserController::class, 'staff'])
+            ->middleware('permission:tenant.staff.manage')
+            ->name('staff.index');
+        Route::get('/staff/create', [App\Http\Controllers\Admin\UserController::class, 'createStaff'])
+            ->middleware('permission:tenant.staff.manage')
+            ->name('staff.create');
+
+        Route::get('/reports', [App\Http\Controllers\Admin\ReportController::class, 'index'])
+            ->middleware('permission:tenant.reports.view')
+            ->name('reports.index');
+
+        Route::get('/clearances', [App\Http\Controllers\Staff\ClearanceController::class, 'index'])
+            ->middleware('permission:tenant.clearances.view')
+            ->name('clearances.index');
+        Route::get('/clearances/export', [App\Http\Controllers\Staff\ClearanceController::class, 'export'])
+            ->middleware('permission:tenant.clearances.export')
+            ->name('clearances.export');
     });
 
     // Student Routes

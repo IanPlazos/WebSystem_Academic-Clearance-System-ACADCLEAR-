@@ -412,8 +412,8 @@
                 </div>
 
                 @if($canViewPlanRequests)
-                    <li class="nav-item {{ request()->routeIs('admin.plan-requests.*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('admin.plan-requests.index') }}">
+                    <li class="nav-item {{ request()->routeIs('staff.plan-requests.*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('staff.plan-requests.index') }}">
                             <i class="fas fa-fw fa-clipboard-list"></i>
                             <span>Plan Requests</span>
                         </a>
@@ -421,8 +421,8 @@
                 @endif
 
                 @if($canManageColleges)
-                    <li class="nav-item {{ request()->routeIs('admin.colleges.*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('admin.colleges.index') }}">
+                    <li class="nav-item {{ request()->routeIs('staff.colleges.*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('staff.colleges.index') }}">
                             <i class="fas fa-fw fa-university"></i>
                             <span>Colleges</span>
                         </a>
@@ -430,8 +430,8 @@
                 @endif
 
                 @if($canManageDepartments)
-                    <li class="nav-item {{ request()->routeIs('admin.departments.*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('admin.departments.index') }}">
+                    <li class="nav-item {{ request()->routeIs('staff.departments.*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('staff.departments.index') }}">
                             <i class="fas fa-fw fa-building"></i>
                             <span>Departments</span>
                         </a>
@@ -439,8 +439,8 @@
                 @endif
 
                 @if($canManageStudents)
-                    <li class="nav-item {{ request()->routeIs('admin.students.*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('admin.students.index') }}">
+                    <li class="nav-item {{ request()->routeIs('staff.students.*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('staff.students.index') }}">
                             <i class="fas fa-fw fa-users"></i>
                             <span>Students</span>
                         </a>
@@ -448,15 +448,15 @@
                 @endif
 
                 @if($canManageStaff)
-                    <li class="nav-item {{ request()->routeIs('admin.staff.*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('admin.staff.index') }}">
+                    <li class="nav-item {{ request()->routeIs('staff.staff.*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('staff.staff.index') }}">
                             <i class="fas fa-fw fa-user-tie"></i>
                             <span>Staff</span>
                         </a>
                     </li>
 
-                    <li class="nav-item {{ request()->routeIs('admin.staff.create') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('admin.staff.create') }}">
+                    <li class="nav-item {{ request()->routeIs('staff.staff.create') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('staff.staff.create') }}">
                             <i class="fas fa-fw fa-user-plus"></i>
                             <span>Add Role</span>
                         </a>
@@ -470,8 +470,8 @@
                 </div>
 
                 @if($canViewReports)
-                    <li class="nav-item {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('admin.reports.index') }}">
+                    <li class="nav-item {{ request()->routeIs('staff.reports.*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('staff.reports.index') }}">
                             <i class="fas fa-fw fa-file-alt"></i>
                             <span>Reports</span>
                         </a>
@@ -479,8 +479,8 @@
                 @endif
 
                 @if($canViewClearances)
-                    <li class="nav-item {{ request()->routeIs('admin.clearances.*') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('admin.clearances.index') }}">
+                    <li class="nav-item {{ request()->routeIs('staff.clearances.*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('staff.clearances.index') }}">
                             <i class="fas fa-fw fa-list"></i>
                             <span>Clearances</span>
                         </a>
@@ -488,8 +488,8 @@
                 @endif
 
                 @if($canExportClearances)
-                    <li class="nav-item {{ request()->routeIs('admin.clearances.export') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('admin.clearances.export') }}">
+                    <li class="nav-item {{ request()->routeIs('staff.clearances.export') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('staff.clearances.export') }}">
                             <i class="fas fa-fw fa-download"></i>
                             <span>Export</span>
                         </a>

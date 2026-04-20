@@ -23,13 +23,13 @@
 
 @php
     $staffModules = [
-        ['permission' => 'tenant.plan_requests.view', 'label' => 'Plan Requests', 'icon' => 'fa-clipboard-list', 'route' => 'admin.plan-requests.index'],
-        ['permission' => 'tenant.colleges.manage', 'label' => 'Colleges', 'icon' => 'fa-university', 'route' => 'admin.colleges.index'],
-        ['permission' => 'tenant.departments.manage', 'label' => 'Departments', 'icon' => 'fa-building', 'route' => 'admin.departments.index'],
-        ['permission' => 'tenant.students.manage', 'label' => 'Students', 'icon' => 'fa-users', 'route' => 'admin.students.index'],
-        ['permission' => 'tenant.staff.manage', 'label' => 'Staff', 'icon' => 'fa-user-tie', 'route' => 'admin.staff.index'],
-        ['permission' => 'tenant.reports.view', 'label' => 'Reports', 'icon' => 'fa-file-alt', 'route' => 'admin.reports.index'],
-        ['permission' => 'tenant.clearances.view', 'label' => 'Clearances', 'icon' => 'fa-list', 'route' => 'admin.clearances.index'],
+        ['permission' => 'tenant.plan_requests.view', 'label' => 'Plan Requests', 'icon' => 'fa-clipboard-list', 'route' => 'staff.plan-requests.index'],
+        ['permission' => 'tenant.colleges.manage', 'label' => 'Colleges', 'icon' => 'fa-university', 'route' => 'staff.colleges.index'],
+        ['permission' => 'tenant.departments.manage', 'label' => 'Departments', 'icon' => 'fa-building', 'route' => 'staff.departments.index'],
+        ['permission' => 'tenant.students.manage', 'label' => 'Students', 'icon' => 'fa-users', 'route' => 'staff.students.index'],
+        ['permission' => 'tenant.staff.manage', 'label' => 'Staff', 'icon' => 'fa-user-tie', 'route' => 'staff.staff.index'],
+        ['permission' => 'tenant.reports.view', 'label' => 'Reports', 'icon' => 'fa-file-alt', 'route' => 'staff.reports.index'],
+        ['permission' => 'tenant.clearances.view', 'label' => 'Clearances', 'icon' => 'fa-list', 'route' => 'staff.clearances.index'],
         ['permission' => 'tenant.profile.manage', 'label' => 'Profile Settings', 'icon' => 'fa-cog', 'route' => 'profile.edit'],
     ];
 
