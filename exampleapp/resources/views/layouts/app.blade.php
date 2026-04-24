@@ -876,7 +876,7 @@
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
-                        <span>Copyright &copy; AcadClear {{ date('Y') }}</span>
+                        <span>Copyright &copy; AcadClear {{ date('Y') }} | v{{ config('app.version', '1.0.0') }}</span>
                     </div>
                 </div>
             </footer>
