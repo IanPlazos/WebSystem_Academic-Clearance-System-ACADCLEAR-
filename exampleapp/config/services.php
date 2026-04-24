@@ -40,4 +40,8 @@ return [
         'secret_key' => env('RECAPTCHA_SECRET_KEY'),
     ],
 
+    'support_chat' => [
+        'token' => env('SUPPORT_CHAT_TOKEN'),
+    ],
+
 ];

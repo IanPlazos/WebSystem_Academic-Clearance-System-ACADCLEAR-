@@ -3,11 +3,16 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $canManageStaff = auth()->user()->hasPermission('tenant.staff.manage');
+@endphp
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Staff Members</h1>
-    <a href="{{ route('admin.staff.create') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Add New Staff
-    </a>
+    @if($canManageStaff)
+        <a href="{{ route('admin.staff.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Staff
+        </a>
+    @endif
 </div>
 
 @if(session('success'))
@@ -58,19 +63,23 @@
                         <td>{{ $member->office_role_label ?? 'Not set' }}</td>
                         <td>{{ $member->created_at->format('M d, Y') }}</td>
                         <td>
-                            <a href="{{ route('admin.staff.edit', $member) }}" 
-                               class="btn btn-warning btn-sm">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <form action="{{ route('admin.staff.destroy', $member) }}" 
-                                  method="POST" class="d-inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" 
-                                        onclick="return confirm('Delete this staff member?')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                            @if($canManageStaff)
+                                <a href="{{ route('admin.staff.edit', $member) }}" 
+                                   class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form action="{{ route('admin.staff.destroy', $member) }}" 
+                                      method="POST" class="d-inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm" 
+                                            onclick="return confirm('Delete this staff member?')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            @else
+                                <span class="text-muted">No actions</span>
+                            @endif
                         </td>
                     </tr>
                     @empty

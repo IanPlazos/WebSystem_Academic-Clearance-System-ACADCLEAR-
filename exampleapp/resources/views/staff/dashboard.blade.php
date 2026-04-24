@@ -1,11 +1,15 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $user = auth()->user();
+    $canViewClearances = $user->hasPermission('tenant.clearances.view');
+@endphp
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Staff Dashboard</h1>
-    <a href="{{ route('staff.clearances.index') }}" class="btn btn-primary">
-        <i class="fas fa-list"></i> View All Clearances
-    </a>
+    <span class="btn btn-outline-secondary disabled" aria-disabled="true">
+        <i class="fas fa-info-circle"></i> Clearancing managed by Tenant Admin
+    </span>
 </div>
 
 @if(session('warning'))
@@ -17,7 +21,51 @@
     </div>
 @endif
 
+@php
+    $staffModules = [
+        ['permission' => 'tenant.plan_requests.view', 'label' => 'Plan Requests', 'icon' => 'fa-clipboard-list', 'route' => 'staff.plan-requests.index'],
+        ['permission' => 'tenant.colleges.manage', 'label' => 'Colleges', 'icon' => 'fa-university', 'route' => 'staff.colleges.index'],
+        ['permission' => 'tenant.departments.manage', 'label' => 'Departments', 'icon' => 'fa-building', 'route' => 'staff.departments.index'],
+        ['permission' => 'tenant.students.manage', 'label' => 'Students', 'icon' => 'fa-users', 'route' => 'staff.students.index'],
+        ['permission' => 'tenant.staff.manage', 'label' => 'Staff', 'icon' => 'fa-user-tie', 'route' => 'staff.staff.index'],
+        ['permission' => 'tenant.reports.view', 'label' => 'Reports', 'icon' => 'fa-file-alt', 'route' => 'staff.reports.index'],
+        ['permission' => 'tenant.clearances.view', 'label' => 'Clearances', 'icon' => 'fa-list', 'route' => 'staff.clearances.index'],
+        ['permission' => 'tenant.profile.manage', 'label' => 'Profile Settings', 'icon' => 'fa-cog', 'route' => 'profile.edit'],
+    ];
+
+    $visibleStaffModules = collect($staffModules)->filter(function ($module) use ($user) {
+        return $user->hasPermission($module['permission']);
+    })->values();
+@endphp
+
+@if($visibleStaffModules->isNotEmpty())
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Your Module Access</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            @foreach($visibleStaffModules as $module)
+                <div class="col-xl-3 col-md-4 col-sm-6 mb-3">
+                    <a href="{{ route($module['route']) }}" class="text-decoration-none">
+                        <div class="card border-left-primary h-100 shadow-sm">
+                            <div class="card-body py-3">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="font-weight-bold text-primary small text-uppercase">{{ $module['label'] }}</span>
+                                    <i class="fas {{ $module['icon'] }} text-gray-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</div>
+@endif
+
 <!-- Statistics Cards -->
+@if($canViewClearances)
 <div class="row">
     <!-- Total Clearances -->
     <div class="col-xl-3 col-md-6 mb-4">
@@ -53,9 +101,7 @@
                 </div>
             </div>
             <div class="card-footer">
-                <a href="{{ route('staff.clearances.index', ['status' => 'pending']) }}" class="small">
-                    View Pending →
-                </a>
+                <span class="small text-muted">Tenant Admin manages approvals</span>
             </div>
         </div>
     </div>
@@ -76,9 +122,7 @@
                 </div>
             </div>
             <div class="card-footer">
-                <a href="{{ route('staff.clearances.index', ['status' => 'approved']) }}" class="small">
-                    View Approved →
-                </a>
+                <span class="small text-muted">Tenant Admin manages approvals</span>
             </div>
         </div>
     </div>
@@ -99,15 +143,15 @@
                 </div>
             </div>
             <div class="card-footer">
-                <a href="{{ route('staff.clearances.index', ['status' => 'rejected']) }}" class="small">
-                    View Rejected →
-                </a>
+                <span class="small text-muted">Tenant Admin manages approvals</span>
             </div>
         </div>
     </div>
 </div>
+@endif
 
 <!-- Recent Clearances -->
+@if($canViewClearances)
 <div class="row">
     <div class="col-lg-12">
         <div class="card shadow mb-4">
@@ -149,10 +193,7 @@
                                 </td>
                                 <td>{{ $clearance->created_at->diffForHumans() }}</td>
                                 <td>
-                                    <a href="{{ route('staff.clearances.index', ['search' => $clearance->student->name]) }}" 
-                                       class="btn btn-sm btn-info">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
+                                    <span class="text-muted">Managed by admin</span>
                                 </td>
                             </tr>
                             @empty
@@ -167,8 +208,10 @@
         </div>
     </div>
 </div>
+@endif
 
 <!-- Department Info -->
+@if($canViewClearances)
 <div class="row">
     <div class="col-lg-12">
         <div class="card shadow mb-4">
@@ -200,4 +243,14 @@
         </div>
     </div>
 </div>
+@endif
+
+@if(!$canViewClearances)
+<div class="card shadow mb-4">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-shield-alt fa-2x text-gray-400 mb-3"></i>
+        <p class="mb-0 text-muted">Clearance analytics are hidden because this module is not assigned to your account.</p>
+    </div>
+</div>
+@endif
 @endsection

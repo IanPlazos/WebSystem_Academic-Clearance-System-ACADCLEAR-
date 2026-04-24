@@ -13,7 +13,7 @@
         <h6 class="m-0 font-weight-bold text-primary">Edit University Information</h6>
     </div>
     <div class="card-body">
-        <form action="{{ route('super-admin.tenants.update', $tenant) }}" method="POST">
+        <form action="{{ route('super-admin.tenants.update', $tenant) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
             
@@ -58,6 +58,24 @@
                     @error('suspension_reason')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">University Logo</label>
+                    <input type="file" name="logo" class="form-control @error('logo') is-invalid @enderror" accept="image/*">
+                    @error('logo')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                    <small class="text-muted d-block mt-1">Upload a new logo to replace the current one.</small>
+                    @if($tenant->logo)
+                        <div class="mt-3 p-2 border rounded d-inline-block bg-white">
+                            <img src="{{ str_starts_with($tenant->logo, 'http://') || str_starts_with($tenant->logo, 'https://') ? $tenant->logo : asset('storage/' . ltrim($tenant->logo, '/')) }}"
+                                 alt="{{ $tenant->name }} logo"
+                                 style="max-height: 72px; max-width: 200px; object-fit: contain;">
+                        </div>
+                    @endif
                 </div>
             </div>
 

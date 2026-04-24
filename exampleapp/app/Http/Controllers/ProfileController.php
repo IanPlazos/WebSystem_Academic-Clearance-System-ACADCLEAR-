@@ -28,6 +28,8 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $validated = $request->validated();
+        $tenantLogoChanged = false;
+        $tenantThemeChanged = false;
 
         unset($validated['profile_photo']);
 
@@ -45,9 +47,54 @@ class ProfileController extends Controller
             $request->user()->email_verified_at = null;
         }
 
+        if ($request->user()->role === 'school_admin') {
+            $request->validate([
+                'tenant_logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:2048'],
+                'remove_tenant_logo' => ['nullable', 'boolean'],
+                'tenant_color_scheme' => ['nullable', 'string', 'in:ocean,forest,sunset'],
+            ]);
+
+            $tenantSlug = (string) $request->attributes->get('tenant_slug', data_get($request->attributes->get('tenant_details'), 'slug', ''));
+
+            if ($tenantSlug !== '') {
+                $branding = $this->loadTenantBranding($tenantSlug);
+                $shouldRemove = $request->boolean('remove_tenant_logo');
+
+                if ($shouldRemove || $request->hasFile('tenant_logo')) {
+                    $this->deleteTenantLogoFiles($tenantSlug);
+                    $tenantLogoChanged = true;
+                    $branding['logo'] = null;
+                }
+
+                if ($request->hasFile('tenant_logo')) {
+                    $extension = $request->file('tenant_logo')->getClientOriginalExtension() ?: 'png';
+                    $logoPath = $request->file('tenant_logo')->storeAs('tenant-branding', $tenantSlug . '.' . strtolower($extension), 'public');
+                    $branding['logo'] = $logoPath;
+                    $tenantLogoChanged = true;
+                }
+
+                if ($request->filled('tenant_color_scheme')) {
+                    $branding['color_scheme'] = $request->string('tenant_color_scheme')->toString();
+                    $tenantThemeChanged = true;
+                }
+
+                $this->saveTenantBranding($tenantSlug, $branding);
+            }
+        }
+
         $request->user()->save();
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        $redirect = Redirect::route('profile.edit')->with('status', 'profile-updated');
+
+        if ($tenantLogoChanged) {
+            $redirect->with('tenant_logo_status', 'tenant-logo-updated');
+        }
+
+        if ($tenantThemeChanged) {
+            $redirect->with('tenant_theme_status', 'tenant-theme-updated');
+        }
+
+        return $redirect;
     }
 
     /**
@@ -73,5 +120,33 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
+    }
+
+    private function deleteTenantLogoFiles(string $tenantSlug): void
+    {
+        foreach (['png', 'jpg', 'jpeg', 'webp', 'gif'] as $extension) {
+            Storage::disk('public')->delete("tenant-branding/{$tenantSlug}.{$extension}");
+        }
+    }
+
+    private function loadTenantBranding(string $tenantSlug): array
+    {
+        $path = "tenant-branding/{$tenantSlug}.json";
+
+        if (!Storage::disk('public')->exists($path)) {
+            return [];
+        }
+
+        $decoded = json_decode(Storage::disk('public')->get($path), true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private function saveTenantBranding(string $tenantSlug, array $branding): void
+    {
+        Storage::disk('public')->put(
+            "tenant-branding/{$tenantSlug}.json",
+            json_encode($branding, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+        );
     }
 }

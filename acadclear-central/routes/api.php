@@ -71,6 +71,12 @@ Route::prefix('tenants')->group(function () {
             'slug' => $tenant->slug,
             'domain' => $tenant->domain,
             'database' => $tenant->database,
+            'logo' => $tenant->logo,
+            'logo_url' => $tenant->logo
+                ? (str_starts_with($tenant->logo, 'http://') || str_starts_with($tenant->logo, 'https://')
+                    ? $tenant->logo
+                    : asset('storage/' . ltrim($tenant->logo, '/')))
+                : null,
             'status' => $tenant->status,
             'is_active' => $tenant->status === 'active' && $activeSubscription !== null,
             'plan' => $activeSubscription ? [
@@ -141,6 +147,9 @@ Route::prefix('tenants')->group(function () {
 });
 
 Route::post('/plan-requests', [App\Http\Controllers\SuperAdmin\PlanRequestController::class, 'store']);
+Route::get('/support-chat/{tenantSlug}/summary', [App\Http\Controllers\Api\SupportChatApiController::class, 'summary']);
+Route::get('/support-chat/{tenantSlug}/messages', [App\Http\Controllers\Api\SupportChatApiController::class, 'messages']);
+Route::post('/support-chat/{tenantSlug}/messages', [App\Http\Controllers\Api\SupportChatApiController::class, 'store']);
 
 // Global API health check
 Route::get('/health', function () {

@@ -1,11 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $canManageColleges = auth()->user()->hasPermission('tenant.colleges.manage');
+@endphp
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Colleges</h1>
-    <a href="{{ route('admin.colleges.create') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Add New College
-    </a>
+    @if($canManageColleges)
+        <a href="{{ route('admin.colleges.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New College
+        </a>
+    @endif
 </div>
 
 @if(session('success'))
@@ -73,19 +78,23 @@
                         </td>
                         <td>{{ $college->created_at->format('M d, Y') }}</td>
                         <td>
-                            <a href="{{ route('admin.colleges.edit', $college) }}" 
-                               class="btn btn-warning btn-sm">
-                                <i class="fas fa-edit"></i> Edit
-                            </a>
-                            <form action="{{ route('admin.colleges.destroy', $college) }}" 
-                                  method="POST" class="d-inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" 
-                                        onclick="return confirm('Are you sure? This will also delete all departments in this college.')">
-                                    <i class="fas fa-trash"></i> Delete
-                                </button>
-                            </form>
+                            @if($canManageColleges)
+                                <a href="{{ route('admin.colleges.edit', $college) }}" 
+                                   class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <form action="{{ route('admin.colleges.destroy', $college) }}" 
+                                      method="POST" class="d-inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm" 
+                                            onclick="return confirm('Are you sure? This will also delete all departments in this college.')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            @else
+                                <span class="text-muted">No actions</span>
+                            @endif
                         </td>
                     </tr>
                     @empty

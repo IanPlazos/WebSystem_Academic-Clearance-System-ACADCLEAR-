@@ -117,6 +117,52 @@
         page-break-after: auto;
     }
 
+    .dark-mode .print-clearance {
+        background: #1f2937;
+        color: #e5e7eb;
+        border-color: #374151;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .dark-mode .clearance-header .seal {
+        border-color: #4b5563;
+        background: #0f172a;
+        color: #34d399;
+    }
+
+    .dark-mode .line-field,
+    .dark-mode .approval-line {
+        border-color: #e5e7eb;
+    }
+
+    .dark-mode .stamp-box {
+        border-color: #4b5563;
+        background: #111827;
+    }
+
+    .dark-mode .status-box {
+        border-color: #e5e7eb;
+        background: transparent;
+    }
+
+    .dark-mode .status-box.filled {
+        background: #e5e7eb;
+        color: #111827;
+    }
+
+    .dark-mode .approval-meta,
+    .dark-mode .text-muted,
+    .dark-mode .small.text-muted {
+        color: #9ca3af !important;
+    }
+
+    .dark-mode .alert-light,
+    .dark-mode .border.rounded.p-2.bg-white {
+        background: #1f2937 !important;
+        color: #e5e7eb !important;
+        border-color: #374151 !important;
+    }
+
     @media print {
         .topbar, .sidebar, .btn, .alert, .progress, .shadow-sm, .shadow, .pagination, .page-heading-actions {
             display: none !important;

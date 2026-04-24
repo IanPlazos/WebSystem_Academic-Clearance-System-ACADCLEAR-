@@ -40,6 +40,13 @@
         </a>
     </li>
 
+    <li class="nav-item {{ request()->routeIs('super-admin.support-chat.*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('super-admin.support-chat.index') }}">
+            <i class="fas fa-fw fa-comments"></i>
+            <span>Support Chat</span>
+        </a>
+    </li>
+
     <li class="nav-item {{ request()->routeIs('super-admin.subscriptions.*') ? 'active' : '' }}">
         <a class="nav-link" href="{{ route('super-admin.subscriptions.index') }}">
             <i class="fas fa-fw fa-credit-card"></i>

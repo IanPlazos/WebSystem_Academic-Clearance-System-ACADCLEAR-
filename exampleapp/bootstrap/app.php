@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register middleware aliases
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'permission' => \App\Http\Middleware\PermissionMiddleware::class,
             'check.tenant' => \App\Http\Middleware\CheckTenantStatus::class,
             'detect.tenant' => \App\Http\Middleware\DetectTenant::class,
             'switch.db' => \App\Http\Middleware\SwitchTenantDatabase::class,

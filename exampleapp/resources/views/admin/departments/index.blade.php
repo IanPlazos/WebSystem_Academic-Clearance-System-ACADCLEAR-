@@ -1,11 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $canManageDepartments = auth()->user()->hasPermission('tenant.departments.manage');
+@endphp
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Departments</h1>
-    <a href="{{ route('admin.departments.create') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Add New Department
-    </a>
+    @if($canManageDepartments)
+        <a href="{{ route('admin.departments.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Department
+        </a>
+    @endif
 </div>
 
 @if(session('success'))
@@ -54,19 +59,23 @@
                         </td>
                         <td>{{ $department->created_at->format('M d, Y') }}</td>
                         <td>
-                            <a href="{{ route('admin.departments.edit', $department) }}" 
-                               class="btn btn-warning btn-sm">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <form action="{{ route('admin.departments.destroy', $department) }}" 
-                                  method="POST" class="d-inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" 
-                                        onclick="return confirm('Delete this department? This action cannot be undone.')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                            @if($canManageDepartments)
+                                <a href="{{ route('admin.departments.edit', $department) }}" 
+                                   class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form action="{{ route('admin.departments.destroy', $department) }}" 
+                                      method="POST" class="d-inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm" 
+                                            onclick="return confirm('Delete this department? This action cannot be undone.')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            @else
+                                <span class="text-muted">No actions</span>
+                            @endif
                         </td>
                     </tr>
                     @empty

@@ -78,6 +78,10 @@ class BackfillTenantAccess extends Command
                     $this->line("  School admin already exists. Email target: {$adminEmail}");
                 }
 
+                $this->ensureStaffPermissionsColumn($tenant);
+                $updatedStaff = $this->backfillStaffModuleAccess($tenant, $this->resolveDefaultStaffPermissions());
+                $this->line("  Staff module access synced for {$updatedStaff} staff account(s)");
+
                 $success++;
             } catch (\Throwable $e) {
                 $failed++;
@@ -214,5 +218,56 @@ class BackfillTenantAccess extends Command
         DB::table($usersTable)->insert($payload);
 
         return true;
+    }
+
+    private function ensureStaffPermissionsColumn(Tenant $tenant): void
+    {
+        $database = $tenant->database;
+
+        $columns = collect(DB::select(
+            'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?',
+            [$database, 'users']
+        ))->pluck('COLUMN_NAME')->all();
+
+        if (in_array('permissions', $columns, true)) {
+            return;
+        }
+
+        DB::statement("ALTER TABLE `{$database}`.`users` ADD COLUMN `permissions` JSON NULL AFTER `office_role`");
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function resolveDefaultStaffPermissions(): array
+    {
+        return [
+            'tenant.dashboard.view',
+            'tenant.profile.manage',
+            'tenant.colleges.manage',
+            'tenant.departments.manage',
+            'tenant.students.manage',
+            'tenant.staff.manage',
+            'tenant.reports.view',
+            'tenant.clearances.view',
+            'tenant.clearances.create',
+            'tenant.clearances.update',
+            'tenant.clearances.export',
+        ];
+    }
+
+    /**
+     * Sync the same module access set to every staff account in a tenant database.
+     */
+    private function backfillStaffModuleAccess(Tenant $tenant, array $permissions): int
+    {
+        $database = $tenant->database;
+
+        return DB::table("{$database}.users")
+            ->where('role', 'staff')
+            ->update([
+                'permissions' => json_encode(array_values(array_unique($permissions))),
+                'updated_at' => now(),
+            ]);
     }
 }

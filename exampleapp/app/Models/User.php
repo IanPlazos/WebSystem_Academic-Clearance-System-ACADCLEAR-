@@ -44,6 +44,7 @@ class User extends Authenticatable
         'college_id',
         'department_id',
         'office_role',
+        'permissions',
         'profile_photo_path',
     ];
 
@@ -83,6 +84,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'permissions' => 'array',
         ];
     }
 
@@ -141,7 +143,7 @@ class User extends Authenticatable
      */
     public static function officeRoles(): array
     {
-        return [
+        $roles = [
             self::OFFICE_ROLE_LIBRARIAN => 'Librarian',
             self::OFFICE_ROLE_REGISTRAR => 'Registrar',
             self::OFFICE_ROLE_CASHIER => 'Cashier',
@@ -151,6 +153,26 @@ class User extends Authenticatable
             self::OFFICE_ROLE_THESIS_ADVISER => 'Thesis Adviser',
             self::OFFICE_ROLE_STUDENT_AFFAIRS_OFFICER => 'Student Affairs Officer',
         ];
+
+        try {
+            $customRoles = static::query()
+                ->where('role', 'staff')
+                ->whereNotNull('office_role')
+                ->pluck('office_role')
+                ->filter(fn ($role) => is_string($role) && $role !== '')
+                ->unique()
+                ->values();
+
+            foreach ($customRoles as $customRole) {
+                if (!array_key_exists($customRole, $roles)) {
+                    $roles[$customRole] = ucwords(str_replace('_', ' ', $customRole));
+                }
+            }
+        } catch (\Throwable $e) {
+            // Keep default roles if tenant DB is unavailable.
+        }
+
+        return $roles;
     }
 
     /**
@@ -163,5 +185,120 @@ class User extends Authenticatable
         }
 
         return static::officeRoles()[$this->office_role] ?? ucwords(str_replace('_', ' ', $this->office_role));
+    }
+
+    /**
+     * Resolve RBAC permissions assigned to the user's role.
+     *
+     * @return array<int, string>
+     */
+    public function getRolePermissions(): array
+    {
+        $map = config('rbac.roles', []);
+        $permissions = $map[$this->role] ?? [];
+
+        if (!is_array($permissions)) {
+            $permissions = [];
+        }
+
+        if ($this->role === 'staff') {
+            $userPermissions = $this->normalizePermissionList($this->permissions);
+
+            if (!empty($userPermissions)) {
+                $permissions = array_merge($permissions, $this->normalizeStaffPermissions($userPermissions));
+            }
+        }
+
+        return array_values(array_unique($permissions));
+    }
+
+    /**
+     * Expand stored staff module keys into their configured permission strings.
+     *
+     * @param array<int, string> $permissions
+     * @return array<int, string>
+     */
+    private function normalizeStaffPermissions(array $permissions): array
+    {
+        $moduleMap = config('rbac.modules', []);
+        $resolved = [];
+
+        foreach ($permissions as $permission) {
+            if (!is_string($permission) || $permission === '') {
+                continue;
+            }
+
+            if (array_key_exists($permission, $moduleMap) && is_array($moduleMap[$permission])) {
+                $resolved = array_merge($resolved, $moduleMap[$permission]);
+                continue;
+            }
+
+            $resolved[] = $permission;
+        }
+
+        return array_values(array_unique($resolved));
+    }
+
+    /**
+     * Normalize a permissions payload coming from the database or request.
+     *
+     * @param mixed $permissions
+     * @return array<int, string>
+     */
+    private function normalizePermissionList(mixed $permissions): array
+    {
+        if (is_array($permissions)) {
+            $flattened = [];
+
+            foreach ($permissions as $permission) {
+                if (is_array($permission)) {
+                    $flattened = array_merge($flattened, $this->normalizePermissionList($permission));
+                    continue;
+                }
+
+                if (is_string($permission) && $permission !== '') {
+                    $flattened[] = $permission;
+                }
+            }
+
+            return array_values(array_unique($flattened));
+        }
+
+        if (is_string($permissions) && $permissions !== '') {
+            $decoded = json_decode($permissions, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $this->normalizePermissionList($decoded);
+            }
+
+            return array_values(array_filter(array_map('trim', explode(',', $permissions))));
+        }
+
+        return [];
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        $permissions = $this->getRolePermissions();
+
+        if (in_array('*', $permissions, true)) {
+            return true;
+        }
+
+        return in_array($permission, $permissions, true);
+    }
+
+    /**
+     * @param array<int, string> $permissions
+     */
+    public function hasAnyPermission(array $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if ($this->hasPermission($permission)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

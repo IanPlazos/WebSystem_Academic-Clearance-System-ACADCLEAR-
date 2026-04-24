@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class TenantController extends Controller
 {
@@ -44,6 +45,7 @@ class TenantController extends Controller
             'slug' => 'required|string|unique:tenants|regex:/^[a-z0-9][a-z0-9\-]*[a-z0-9]$/|max:64',
             'domain' => 'required|string|unique:tenants',
             'database' => 'required|string|unique:tenants',
+            'logo' => 'nullable|image|max:2048',
             'plan_id' => 'required|exists:plans,id',
             'admin_email' => 'required|email|max:255',
             'admin_password' => 'required|string|min:8|max:255',
@@ -51,13 +53,19 @@ class TenantController extends Controller
             'slug.regex' => 'The slug must contain only lowercase letters, numbers, and hyphens (must start and end with alphanumeric).',
         ]);
 
+        $logoPath = null;
+        if ($request->hasFile('logo')) {
+            $logoPath = $request->file('logo')->store('tenant-logos', 'public');
+        }
+
         try {
-            [$tenant, $plan, $subscription, $loginUrl] = DB::transaction(function () use ($validated) {
+            [$tenant, $plan, $subscription, $loginUrl] = DB::transaction(function () use ($validated, $logoPath) {
                 $tenant = Tenant::create([
                     'name' => $validated['name'],
                     'slug' => $validated['slug'],
                     'domain' => $validated['domain'],
                     'database' => $validated['database'],
+                    'logo' => $logoPath ?? null,
                     'status' => 'active',
                     'settings' => [
                         'theme' => 'default',
@@ -148,9 +156,18 @@ class TenantController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'domain' => 'required|string|unique:tenants,domain,' . $tenant->id,
+            'logo' => 'nullable|image|max:2048',
             'status' => 'required|in:active,suspended,expired',
             'suspension_reason' => 'required_if:status,suspended|nullable|string',
         ]);
+
+        if ($request->hasFile('logo')) {
+            if ($tenant->logo) {
+                Storage::disk('public')->delete($tenant->logo);
+            }
+
+            $validated['logo'] = $request->file('logo')->store('tenant-logos', 'public');
+        }
 
         $tenant->update($validated);
 

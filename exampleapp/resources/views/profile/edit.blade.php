@@ -11,6 +11,12 @@
     @if (session('status') === 'password-updated')
         <div class="alert alert-success">Password updated successfully.</div>
     @endif
+    @if (session('tenant_logo_status') === 'tenant-logo-updated')
+        <div class="alert alert-success">Tenant sidebar logo updated successfully.</div>
+    @endif
+    @if (session('tenant_theme_status') === 'tenant-theme-updated')
+        <div class="alert alert-success">Tenant color scheme updated successfully.</div>
+    @endif
 
     <div class="row">
         <div class="col-lg-4 mb-4">
@@ -110,6 +116,94 @@
                     </form>
                 </div>
             </div>
+
+            @if($user->role === 'school_admin')
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Tenant Branding</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data">
+                            @csrf
+                            @method('patch')
+
+                            <input type="hidden" name="name" value="{{ old('name', $user->name) }}">
+                            <input type="hidden" name="email" value="{{ old('email', $user->email) }}">
+
+                            <div class="form-group">
+                                <label for="tenant_logo">Sidebar Logo</label>
+                                <input
+                                    id="tenant_logo"
+                                    name="tenant_logo"
+                                    type="file"
+                                    class="form-control-file @error('tenant_logo') is-invalid @enderror"
+                                    accept="image/png,image/jpeg,image/webp,image/gif"
+                                />
+                                <small class="form-text text-muted">Allowed: JPG, PNG, WEBP, GIF (max 2MB)</small>
+                                @error('tenant_logo')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            @if(!empty($tenantLocalLogoUrl))
+                                <div class="mb-3 p-2 border rounded d-inline-block bg-white">
+                                    <img src="{{ $tenantLocalLogoUrl }}" alt="Tenant logo" style="max-height:72px;max-width:220px;object-fit:contain;">
+                                </div>
+                            @endif
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" value="1" id="remove_tenant_logo" name="remove_tenant_logo">
+                                <label class="form-check-label" for="remove_tenant_logo">
+                                    Remove current tenant logo
+                                </label>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tenant_color_scheme">Color Scheme</label>
+                                @php
+                                    $storedScheme = old('tenant_color_scheme', $tenantBranding['color_scheme'] ?? 'ocean');
+                                    $selectedScheme = match ($storedScheme) {
+                                        'blue' => 'ocean',
+                                        'emerald' => 'forest',
+                                        'amber' => 'sunset',
+                                        default => $storedScheme,
+                                    };
+                                    $schemes = [
+                                        'ocean' => ['label' => 'Ocean', 'description' => 'Blue gradient', 'gradient' => 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #0f172a 100%)'],
+                                        'forest' => ['label' => 'Forest', 'description' => 'Green gradient', 'gradient' => 'linear-gradient(135deg, #10b981 0%, #059669 50%, #064e3b 100%)'],
+                                        'sunset' => ['label' => 'Sunset', 'description' => 'Amber gradient', 'gradient' => 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #7c2d12 100%)'],
+                                    ];
+                                @endphp
+                                <select id="tenant_color_scheme" name="tenant_color_scheme" class="form-control @error('tenant_color_scheme') is-invalid @enderror">
+                                    @foreach($schemes as $key => $scheme)
+                                        <option value="{{ $key }}" {{ $selectedScheme === $key ? 'selected' : '' }}>{{ $scheme['label'] }} - {{ $scheme['description'] }}</option>
+                                    @endforeach
+                                </select>
+                                @error('tenant_color_scheme')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            @php
+                                $schemeMeta = $schemes[$selectedScheme] ?? $schemes['ocean'];
+                            @endphp
+
+                            <div class="mb-3 p-3 border rounded bg-white">
+                                <div class="small text-muted mb-2">Current scheme preview</div>
+                                <div class="rounded" style="height:52px;background:{{ $schemeMeta['gradient'] }};"></div>
+                                <div class="d-flex align-items-center mt-2">
+                                    <strong>{{ $schemeMeta['label'] }}</strong>
+                                    <span class="ml-2 text-muted small">{{ $schemeMeta['description'] }}</span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-palette mr-1"></i> Save Branding
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @endif
 
             <div class="card shadow mb-4">
                 <div class="card-header py-3">

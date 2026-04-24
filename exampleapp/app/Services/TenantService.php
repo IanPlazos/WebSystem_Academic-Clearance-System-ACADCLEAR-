@@ -260,6 +260,106 @@ class TenantService
     }
 
     /**
+     * Fetch support chat messages from Central App.
+     */
+    public function getSupportChatMessages(string $tenantSlug): array
+    {
+        try {
+            $response = Http::withHeaders($this->supportChatHeaders())
+                ->timeout(10)
+                ->get(rtrim($this->centralUrl, '/') . '/api/support-chat/' . $tenantSlug . '/messages');
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            return [
+                'conversation' => null,
+                'messages' => [],
+            ];
+        } catch (\Throwable $e) {
+            \Log::error('Support chat fetch failed: ' . $e->getMessage());
+
+            return [
+                'conversation' => null,
+                'messages' => [],
+            ];
+        }
+    }
+
+    /**
+     * Send support chat message to Central App.
+     */
+    public function sendSupportChatMessage(string $tenantSlug, string $message, ?string $senderName = null, ?int $senderUserId = null): array
+    {
+        try {
+            $response = Http::withHeaders($this->supportChatHeaders())
+                ->timeout(10)
+                ->post(rtrim($this->centralUrl, '/') . '/api/support-chat/' . $tenantSlug . '/messages', [
+                    'message' => $message,
+                    'sender_name' => $senderName,
+                    'sender_user_id' => $senderUserId,
+                ]);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            return [
+                'success' => false,
+                'message' => 'Failed to send message to support.',
+            ];
+        } catch (\Throwable $e) {
+            \Log::error('Support chat send failed: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Support service unavailable right now.',
+            ];
+        }
+    }
+
+    /**
+     * Get support chat unread badge and recent inbox messages from Central App.
+     */
+    public function getSupportChatSummary(string $tenantSlug): array
+    {
+        try {
+            $response = Http::withHeaders($this->supportChatHeaders())
+                ->timeout(10)
+                ->get(rtrim($this->centralUrl, '/') . '/api/support-chat/' . $tenantSlug . '/summary');
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            return [
+                'unread_count' => 0,
+                'recent_messages' => [],
+            ];
+        } catch (\Throwable $e) {
+            \Log::error('Support chat summary fetch failed: ' . $e->getMessage());
+
+            return [
+                'unread_count' => 0,
+                'recent_messages' => [],
+            ];
+        }
+    }
+
+    private function supportChatHeaders(): array
+    {
+        $token = (string) config('services.support_chat.token', '');
+        if ($token === '') {
+            return [];
+        }
+
+        return [
+            'X-Support-Token' => $token,
+        ];
+    }
+
+    /**
      * Get tenant's subscription end date
      */
     public function getSubscriptionEndDate($slug = null)

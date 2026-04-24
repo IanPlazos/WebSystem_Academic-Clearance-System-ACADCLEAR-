@@ -1,15 +1,20 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $canExportReports = auth()->user()->hasPermission('tenant.reports.export');
+@endphp
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Reports & Analytics</h1>
     <div>
-        <a href="{{ route('admin.reports.export.pdf', request()->all()) }}" class="btn btn-danger">
-            <i class="fas fa-file-pdf"></i> Export PDF
-        </a>
-        <a href="{{ route('admin.reports.export.csv', request()->all()) }}" class="btn btn-success">
-            <i class="fas fa-file-csv"></i> Export CSV
-        </a>
+        @if($canExportReports)
+            <a href="{{ route('admin.reports.export.pdf', request()->all()) }}" class="btn btn-danger">
+                <i class="fas fa-file-pdf"></i> Export PDF
+            </a>
+            <a href="{{ route('admin.reports.export.csv', request()->all()) }}" class="btn btn-success">
+                <i class="fas fa-file-csv"></i> Export CSV
+            </a>
+        @endif
     </div>
 </div>
 

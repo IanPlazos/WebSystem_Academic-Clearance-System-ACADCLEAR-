@@ -51,6 +51,16 @@ Route::get('/suspended/page', function () {
 
 // Authenticated routes
 Route::middleware(['auth'])->group(function () {
+
+    Route::get('/support/chat', [App\Http\Controllers\SupportChatController::class, 'index'])
+        ->middleware('permission:tenant.support_chat.access')
+        ->name('support.chat');
+    Route::get('/support/chat/messages', [App\Http\Controllers\SupportChatController::class, 'messages'])
+        ->middleware('permission:tenant.support_chat.access')
+        ->name('support.chat.messages');
+    Route::post('/support/chat/messages', [App\Http\Controllers\SupportChatController::class, 'store'])
+        ->middleware('permission:tenant.support_chat.access')
+        ->name('support.chat.store');
     
     // Generic dashboard redirect (by role)
     Route::get('/dashboard', function () {
@@ -67,61 +77,161 @@ Route::middleware(['auth'])->group(function () {
         return redirect()->route('profile.edit');
     })->name('dashboard');
 
-    // School Admin Routes (ALL admin routes go here)
-    Route::middleware(['role:school_admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Tenant Admin Routes (permission-driven)
+    Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
         // Dashboard
-        Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])
+            ->middleware('permission:tenant.dashboard.view')
+            ->name('dashboard');
 
         // Plan Requests
-        Route::get('/plan-requests', [App\Http\Controllers\Admin\PlanRequestController::class, 'index'])->name('plan-requests.index');
+        Route::get('/plan-requests', [App\Http\Controllers\Admin\PlanRequestController::class, 'index'])
+            ->middleware('permission:tenant.plan_requests.view')
+            ->name('plan-requests.index');
         
         // College Management
-        Route::resource('colleges', App\Http\Controllers\Admin\CollegeController::class);
+        Route::resource('colleges', App\Http\Controllers\Admin\CollegeController::class)
+            ->except(['index'])
+            ->middleware('permission:tenant.colleges.manage');
+
+        Route::get('/colleges', [App\Http\Controllers\Admin\CollegeController::class, 'index'])
+            ->middleware('permission:tenant.colleges.manage')
+            ->name('colleges.index');
         
         // Department Management
-        Route::resource('departments', App\Http\Controllers\Admin\DepartmentController::class);
+        Route::resource('departments', App\Http\Controllers\Admin\DepartmentController::class)
+            ->except(['index'])
+            ->middleware('permission:tenant.departments.manage');
+
+        Route::get('/departments', [App\Http\Controllers\Admin\DepartmentController::class, 'index'])
+            ->middleware('permission:tenant.departments.manage')
+            ->name('departments.index');
         
         // Student Management
-        Route::get('/students', [App\Http\Controllers\Admin\UserController::class, 'students'])->name('students.index');
-        Route::get('/students/create', [App\Http\Controllers\Admin\UserController::class, 'createStudent'])->name('students.create');
-        Route::post('/students', [App\Http\Controllers\Admin\UserController::class, 'storeStudent'])->name('students.store');
-        Route::get('/students/{user}/edit', [App\Http\Controllers\Admin\UserController::class, 'editStudent'])->name('students.edit');
-        Route::put('/students/{user}', [App\Http\Controllers\Admin\UserController::class, 'updateStudent'])->name('students.update');
-        Route::delete('/students/{user}', [App\Http\Controllers\Admin\UserController::class, 'destroyStudent'])->name('students.destroy');
+        Route::get('/students', [App\Http\Controllers\Admin\UserController::class, 'students'])
+            ->middleware('permission:tenant.students.manage')
+            ->name('students.index');
+        Route::get('/students/create', [App\Http\Controllers\Admin\UserController::class, 'createStudent'])
+            ->middleware('permission:tenant.students.manage')
+            ->name('students.create');
+        Route::post('/students', [App\Http\Controllers\Admin\UserController::class, 'storeStudent'])
+            ->middleware('permission:tenant.students.manage')
+            ->name('students.store');
+        Route::get('/students/{user}/edit', [App\Http\Controllers\Admin\UserController::class, 'editStudent'])
+            ->middleware('permission:tenant.students.manage')
+            ->name('students.edit');
+        Route::put('/students/{user}', [App\Http\Controllers\Admin\UserController::class, 'updateStudent'])
+            ->middleware('permission:tenant.students.manage')
+            ->name('students.update');
+        Route::delete('/students/{user}', [App\Http\Controllers\Admin\UserController::class, 'destroyStudent'])
+            ->middleware('permission:tenant.students.manage')
+            ->name('students.destroy');
         
         // Staff Management
-        Route::get('/staff', [App\Http\Controllers\Admin\UserController::class, 'staff'])->name('staff.index');
-        Route::get('/staff/create', [App\Http\Controllers\Admin\UserController::class, 'createStaff'])->name('staff.create');
-        Route::post('/staff', [App\Http\Controllers\Admin\UserController::class, 'storeStaff'])->name('staff.store');
-        Route::get('/staff/{user}/edit', [App\Http\Controllers\Admin\UserController::class, 'editStaff'])->name('staff.edit');
-        Route::put('/staff/{user}', [App\Http\Controllers\Admin\UserController::class, 'updateStaff'])->name('staff.update');
-        Route::delete('/staff/{user}', [App\Http\Controllers\Admin\UserController::class, 'destroyStaff'])->name('staff.destroy');
+        Route::get('/staff', [App\Http\Controllers\Admin\UserController::class, 'staff'])
+            ->middleware('permission:tenant.staff.manage')
+            ->name('staff.index');
+        Route::get('/staff/create', [App\Http\Controllers\Admin\UserController::class, 'createStaff'])
+            ->middleware('permission:tenant.staff.manage')
+            ->name('staff.create');
+        Route::post('/staff', [App\Http\Controllers\Admin\UserController::class, 'storeStaff'])
+            ->middleware('permission:tenant.staff.manage')
+            ->name('staff.store');
+        Route::get('/staff/{user}/edit', [App\Http\Controllers\Admin\UserController::class, 'editStaff'])
+            ->middleware('permission:tenant.staff.manage')
+            ->name('staff.edit');
+        Route::put('/staff/{user}', [App\Http\Controllers\Admin\UserController::class, 'updateStaff'])
+            ->middleware('permission:tenant.staff.manage')
+            ->name('staff.update');
+        Route::delete('/staff/{user}', [App\Http\Controllers\Admin\UserController::class, 'destroyStaff'])
+            ->middleware('permission:tenant.staff.manage')
+            ->name('staff.destroy');
         
         // AJAX route for departments (used in staff creation)
         Route::get('/get-departments/{college}', [App\Http\Controllers\Admin\UserController::class, 'getDepartments'])
+            ->middleware('permission:tenant.departments.manage|tenant.staff.manage')
             ->name('get.departments');
         
         // ============ NEW: REPORTS ROUTES ============
-        Route::get('/reports', [App\Http\Controllers\Admin\ReportController::class, 'index'])->name('reports.index');
-        Route::get('/reports/export-pdf', [App\Http\Controllers\Admin\ReportController::class, 'exportPdf'])->name('reports.export.pdf');
-        Route::get('/reports/export-csv', [App\Http\Controllers\Admin\ReportController::class, 'exportCsv'])->name('reports.export.csv');
-        Route::get('/reports/data', [App\Http\Controllers\Admin\ReportController::class, 'getData'])->name('reports.data');
+        Route::get('/reports', [App\Http\Controllers\Admin\ReportController::class, 'index'])
+            ->middleware('permission:tenant.reports.view')
+            ->name('reports.index');
+        Route::get('/reports/export-pdf', [App\Http\Controllers\Admin\ReportController::class, 'exportPdf'])
+            ->middleware('permission:tenant.reports.export')
+            ->name('reports.export.pdf');
+        Route::get('/reports/export-csv', [App\Http\Controllers\Admin\ReportController::class, 'exportCsv'])
+            ->middleware('permission:tenant.reports.export')
+            ->name('reports.export.csv');
+        Route::get('/reports/data', [App\Http\Controllers\Admin\ReportController::class, 'getData'])
+            ->middleware('permission:tenant.reports.view')
+            ->name('reports.data');
+
+        // Clearance Management (Tenant Admin)
+        Route::get('/clearances', [App\Http\Controllers\Staff\ClearanceController::class, 'index'])
+            ->middleware('permission:tenant.clearances.view')
+            ->name('clearances.index');
+        Route::get('/clearances/create', [App\Http\Controllers\Staff\ClearanceController::class, 'create'])
+            ->middleware('permission:tenant.clearances.create')
+            ->name('clearances.create');
+        Route::post('/clearances', [App\Http\Controllers\Staff\ClearanceController::class, 'store'])
+            ->middleware('permission:tenant.clearances.create')
+            ->name('clearances.store');
+        Route::post('/clearances/{clearance}/checklist/{item}', [App\Http\Controllers\Staff\ClearanceController::class, 'updateChecklistItem'])
+            ->middleware('permission:tenant.clearances.update')
+            ->name('clearances.checklist.update');
+        Route::post('/clearances/{clearance}/approve', [App\Http\Controllers\Staff\ClearanceController::class, 'approve'])
+            ->middleware('permission:tenant.clearances.update')
+            ->name('clearances.approve');
+        Route::post('/clearances/{clearance}/reject', [App\Http\Controllers\Staff\ClearanceController::class, 'reject'])
+            ->middleware('permission:tenant.clearances.update')
+            ->name('clearances.reject');
+        Route::post('/clearances/bulk-approve', [App\Http\Controllers\Staff\ClearanceController::class, 'bulkApprove'])
+            ->middleware('permission:tenant.clearances.update')
+            ->name('clearances.bulk-approve');
+        Route::get('/clearances/export', [App\Http\Controllers\Staff\ClearanceController::class, 'export'])
+            ->middleware('permission:tenant.clearances.export')
+            ->name('clearances.export');
     });
 
     // Staff Routes
     Route::middleware(['role:staff'])->prefix('staff')->name('staff.')->group(function () {
         // Dashboard
         Route::get('/dashboard', [App\Http\Controllers\Staff\DashboardController::class, 'index'])->name('dashboard');
-        
-        // Clearance Management
-        Route::get('/clearances', [App\Http\Controllers\Staff\ClearanceController::class, 'index'])->name('clearances.index');
-        Route::get('/clearances/create', [App\Http\Controllers\Staff\ClearanceController::class, 'create'])->name('clearances.create');
-        Route::post('/clearances', [App\Http\Controllers\Staff\ClearanceController::class, 'store'])->name('clearances.store');
-        Route::post('/clearances/{clearance}/checklist/{item}', [App\Http\Controllers\Staff\ClearanceController::class, 'updateChecklistItem'])->name('clearances.checklist.update');
-        Route::post('/clearances/{clearance}/approve', [App\Http\Controllers\Staff\ClearanceController::class, 'approve'])->name('clearances.approve');
-        Route::post('/clearances/{clearance}/reject', [App\Http\Controllers\Staff\ClearanceController::class, 'reject'])->name('clearances.reject');
-        Route::post('/clearances/bulk-approve', [App\Http\Controllers\Staff\ClearanceController::class, 'bulkApprove'])->name('clearances.bulk-approve');
-        Route::get('/clearances/export', [App\Http\Controllers\Staff\ClearanceController::class, 'export'])->name('clearances.export');
+
+        // Staff-scoped aliases for sidebar modules (keep URL under /staff)
+        Route::get('/plan-requests', [App\Http\Controllers\Admin\PlanRequestController::class, 'index'])
+            ->middleware('permission:tenant.plan_requests.view')
+            ->name('plan-requests.index');
+
+        Route::get('/colleges', [App\Http\Controllers\Admin\CollegeController::class, 'index'])
+            ->middleware('permission:tenant.colleges.manage')
+            ->name('colleges.index');
+
+        Route::get('/departments', [App\Http\Controllers\Admin\DepartmentController::class, 'index'])
+            ->middleware('permission:tenant.departments.manage')
+            ->name('departments.index');
+
+        Route::get('/students', [App\Http\Controllers\Admin\UserController::class, 'students'])
+            ->middleware('permission:tenant.students.manage')
+            ->name('students.index');
+
+        Route::get('/staff', [App\Http\Controllers\Admin\UserController::class, 'staff'])
+            ->middleware('permission:tenant.staff.manage')
+            ->name('staff.index');
+        Route::get('/staff/create', [App\Http\Controllers\Admin\UserController::class, 'createStaff'])
+            ->middleware('permission:tenant.staff.manage')
+            ->name('staff.create');
+
+        Route::get('/reports', [App\Http\Controllers\Admin\ReportController::class, 'index'])
+            ->middleware('permission:tenant.reports.view')
+            ->name('reports.index');
+
+        Route::get('/clearances', [App\Http\Controllers\Staff\ClearanceController::class, 'index'])
+            ->middleware('permission:tenant.clearances.view')
+            ->name('clearances.index');
+        Route::get('/clearances/export', [App\Http\Controllers\Staff\ClearanceController::class, 'export'])
+            ->middleware('permission:tenant.clearances.export')
+            ->name('clearances.export');
     });
 
     // Student Routes

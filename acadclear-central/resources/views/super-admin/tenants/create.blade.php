@@ -14,7 +14,7 @@
         <h6 class="m-0 font-weight-bold text-primary">University Information</h6>
     </div>
     <div class="card-body">
-        <form action="{{ route('super-admin.tenants.store') }}" method="POST">
+        <form action="{{ route('super-admin.tenants.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             
             <div class="row">
@@ -56,6 +56,17 @@
                             </option>
                         @endforeach
                     </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">University Logo</label>
+                    <input type="file" name="logo" class="form-control @error('logo') is-invalid @enderror" accept="image/*">
+                    @error('logo')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                    <small class="text-muted">PNG, JPG, GIF, or WebP. This will appear in the tenant sidebar.</small>
                 </div>
             </div>
 

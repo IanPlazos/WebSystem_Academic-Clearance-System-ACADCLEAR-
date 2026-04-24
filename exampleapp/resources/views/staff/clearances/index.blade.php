@@ -3,15 +3,24 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $canCreateClearance = auth()->user()->hasPermission('tenant.clearances.create');
+    $canExportClearance = auth()->user()->hasPermission('tenant.clearances.export');
+    $canUpdateClearance = auth()->user()->hasPermission('tenant.clearances.update');
+@endphp
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Clearance Requests</h1>
     <div>
-        <a href="{{ route('staff.clearances.create') }}" class="btn btn-primary mr-2">
-            <i class="fas fa-plus"></i> Add Clearance
-        </a>
-        <a href="{{ route('staff.clearances.export', request()->all()) }}" class="btn btn-success">
-            <i class="fas fa-download"></i> Export
-        </a>
+        @if($canCreateClearance)
+            <a href="{{ route('admin.clearances.create') }}" class="btn btn-primary mr-2">
+                <i class="fas fa-plus"></i> Add Clearance
+            </a>
+        @endif
+        @if($canExportClearance)
+            <a href="{{ route('admin.clearances.export', request()->all()) }}" class="btn btn-success">
+                <i class="fas fa-download"></i> Export
+            </a>
+        @endif
     </div>
 </div>
 
@@ -39,7 +48,7 @@
         <h6 class="m-0 font-weight-bold text-primary">Filter Clearances</h6>
     </div>
     <div class="card-body">
-        <form method="GET" action="{{ route('staff.clearances.index') }}" class="row g-3">
+        <form method="GET" action="{{ route('admin.clearances.index') }}" class="row g-3">
             <div class="col-md-3">
                 <select name="status" class="form-select">
                     <option value="">All Status</option>
@@ -56,14 +65,14 @@
                 <button type="submit" class="btn btn-primary w-100">Filter</button>
             </div>
             <div class="col-md-2">
-                <a href="{{ route('staff.clearances.index') }}" class="btn btn-secondary w-100">Reset</a>
+                <a href="{{ route('admin.clearances.index') }}" class="btn btn-secondary w-100">Reset</a>
             </div>
         </form>
     </div>
 </div>
 
 <!-- Bulk Actions -->
-@if(request('status') == 'pending' || !request('status'))
+@if($canUpdateClearance && (request('status') == 'pending' || !request('status')))
 <div class="card shadow mb-4">
     <div class="card-header py-3">
         <h6 class="m-0 font-weight-bold text-primary">Bulk Actions</h6>
@@ -88,7 +97,7 @@
             <table class="table table-bordered" width="100%" cellspacing="0">
                 <thead>
                     <tr>
-                        @if(request('status') == 'pending' || !request('status'))
+                        @if($canUpdateClearance && (request('status') == 'pending' || !request('status')))
                         <th width="20">
                             <input type="checkbox" id="selectAll">
                         </th>
@@ -108,16 +117,16 @@
                 <tbody>
                     @forelse($clearances as $clearance)
                     <tr>
-                        @if(request('status') == 'pending' || !request('status'))
+                        @if($canUpdateClearance && (request('status') == 'pending' || !request('status')))
                         <td>
                             <input type="checkbox" class="clearance-checkbox" value="{{ $clearance->id }}">
                         </td>
                         @endif
                         <td>
-                            <strong>{{ $clearance->student->name }}</strong><br>
-                            <small class="text-muted">{{ $clearance->student->email }}</small>
+                            <strong>{{ $clearance->student?->name ?? 'N/A' }}</strong><br>
+                            <small class="text-muted">{{ $clearance->student?->email ?? 'N/A' }}</small>
                         </td>
-                        <td>{{ $clearance->department->name }}</td>
+                        <td>{{ $clearance->department?->name ?? 'N/A' }}</td>
                         <td>{{ $clearance->clearance_title ?? 'Department Clearance' }}</td>
                         <td>{{ $clearance->office_or_instructor ?? 'Assigned staff' }}</td>
                         <td>{{ $clearance->approval_location ?? 'Department Office' }}</td>
@@ -140,13 +149,15 @@
                                                     {{ ucfirst($item->status) }}
                                                 </span>
                                             </div>
-                                            <form action="{{ route('staff.clearances.checklist.update', ['clearance' => $clearance->id, 'item' => $item->id]) }}" method="POST" class="mt-2">
-                                                @csrf
-                                                <input type="hidden" name="status" value="{{ $item->status === 'approved' ? 'pending' : 'approved' }}">
-                                                <button type="submit" class="btn btn-sm btn-outline-{{ $item->status === 'approved' ? 'warning' : 'success' }}">
-                                                    {{ $item->status === 'approved' ? 'Mark Pending' : 'Mark Approved' }}
-                                                </button>
-                                            </form>
+                                            @if($canUpdateClearance)
+                                                <form action="{{ route('admin.clearances.checklist.update', ['clearance' => $clearance->id, 'item' => $item->id]) }}" method="POST" class="mt-2">
+                                                    @csrf
+                                                    <input type="hidden" name="status" value="{{ $item->status === 'approved' ? 'pending' : 'approved' }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-{{ $item->status === 'approved' ? 'warning' : 'success' }}">
+                                                        {{ $item->status === 'approved' ? 'Mark Pending' : 'Mark Approved' }}
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </li>
                                     @endforeach
                                 </ul>
@@ -177,7 +188,7 @@
                         </td>
                         <td>{{ $clearance->created_at->format('M d, Y') }}</td>
                         <td>
-                            @if($clearance->status == 'pending')
+                            @if($canUpdateClearance && $clearance->status == 'pending')
                                 <button class="btn btn-success btn-sm approve-btn" 
                                         data-id="{{ $clearance->id }}"
                                         onclick="approveClearance({{ $clearance->id }})">
@@ -197,10 +208,11 @@
                     </tr>
 
                     <!-- Reject Modal for each clearance -->
+                    @if($canUpdateClearance)
                     <div class="modal fade" id="rejectModal{{ $clearance->id }}" tabindex="-1">
                         <div class="modal-dialog">
                             <div class="modal-content">
-                                <form action="{{ route('staff.clearances.reject', $clearance) }}" 
+                                <form action="{{ route('admin.clearances.reject', $clearance) }}" 
                                       method="POST" id="rejectForm{{ $clearance->id }}">
                                     @csrf
                                     <div class="modal-header">
@@ -229,9 +241,10 @@
                             </div>
                         </div>
                     </div>
+                    @endif
                     @empty
                     <tr>
-                        <td colspan="{{ request('status') == 'pending' || !request('status') ? '12' : '11' }}" 
+                        <td colspan="{{ $canUpdateClearance && (request('status') == 'pending' || !request('status')) ? '12' : '11' }}" 
                             class="text-center">
                             No clearances found.
                         </td>
@@ -249,6 +262,7 @@
 
 @push('scripts')
 <script>
+    @if($canUpdateClearance)
     // Select all checkboxes
     document.getElementById('selectAll')?.addEventListener('change', function() {
         var checkboxes = document.getElementsByClassName('clearance-checkbox');
@@ -260,7 +274,7 @@
     // Approve single clearance
     function approveClearance(id) {
         if(confirm('Approve this clearance?')) {
-            fetch('/staff/clearances/' + id + '/approve', {
+            fetch('{{ url('/admin/clearances') }}/' + id + '/approve', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -296,7 +310,7 @@
         }
         
         if(confirm('Approve ' + selectedIds.length + ' selected clearances?')) {
-            fetch('{{ route("staff.clearances.bulk-approve") }}', {
+            fetch('{{ route("admin.clearances.bulk-approve") }}', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -331,7 +345,7 @@
             return;
         }
 
-        fetch('/staff/clearances/' + id + '/reject', {
+        fetch('{{ url('/admin/clearances') }}/' + id + '/reject', {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -352,6 +366,7 @@
             alert('Error: Unable to reject clearance');
         });
     }
+    @endif
 </script>
 @endpush
 

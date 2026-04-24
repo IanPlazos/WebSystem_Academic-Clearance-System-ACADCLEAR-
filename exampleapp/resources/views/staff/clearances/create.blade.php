@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+	$canCreateClearances = auth()->user()->hasPermission('tenant.clearances.create');
+@endphp
 <div class="row align-items-center mb-4">
 	<div class="col-12 col-lg-8">
 		<div class="d-flex align-items-start">
@@ -9,12 +12,12 @@
 			</div>
 			<div>
 				<h1 class="h3 mb-1 text-gray-800">Create Student Clearance</h1>
-				<p class="mb-0 text-muted">Select the student, choose the offices or instructors, then submit the checklist for approval.</p>
+				<p class="mb-0 text-muted">Select a college or department scope, then submit one checklist that applies to all matching students.</p>
 			</div>
 		</div>
 	</div>
 	<div class="col-12 col-lg-4 text-lg-right mt-3 mt-lg-0">
-		<a href="{{ route('staff.clearances.index') }}" class="btn btn-outline-secondary">
+		<a href="{{ route('admin.clearances.index') }}" class="btn btn-outline-secondary">
 			<i class="fas fa-arrow-left mr-1"></i> Back to Clearances
 		</a>
 	</div>
@@ -34,29 +37,44 @@
 <div class="card shadow-sm mb-4">
 	<div class="card-header py-3 d-flex align-items-center justify-content-between">
 		<h6 class="m-0 font-weight-bold text-primary">Clearance Details</h6>
-		<span class="badge badge-primary">Staff Workflow</span>
+		<span class="badge badge-primary">Tenant Admin Workflow</span>
 	</div>
 	<div class="card-body">
-		<form method="POST" action="{{ route('staff.clearances.store') }}">
+		@if($canCreateClearances)
+		<form method="POST" action="{{ route('admin.clearances.store') }}">
 			@csrf
 
 			<div class="row">
 				<div class="col-lg-6 mb-4">
-					<label for="student_id" class="d-block font-weight-bold text-gray-700">Student <span class="text-danger">*</span></label>
-					<select name="student_id" id="student_id" class="form-control @error('student_id') is-invalid @enderror" required>
-						<option value="">Select student</option>
-						@foreach ($students as $student)
-							<option value="{{ $student->id }}" {{ old('student_id') == $student->id ? 'selected' : '' }}>
-								{{ $student->name }} ({{ $student->email }})
+					<label for="college_id" class="d-block font-weight-bold text-gray-700">College <span class="text-danger">*</span></label>
+					<select name="college_id" id="college_id" class="form-control @error('college_id') is-invalid @enderror" required>
+						<option value="">Select college</option>
+						@foreach ($colleges as $college)
+							<option value="{{ $college->id }}" {{ old('college_id', $actor->college_id ?? '') == $college->id ? 'selected' : '' }}>
+								{{ $college->name }}
 							</option>
 						@endforeach
 					</select>
-					<small class="form-text text-muted">Choose the student who needs clearance processing.</small>
-					@error('student_id')
+					<small class="form-text text-muted">All students under this college (or selected department) will receive this clearance.</small>
+					@error('college_id')
 						<div class="invalid-feedback d-block">{{ $message }}</div>
 					@enderror
 				</div>
 
+				<div class="col-lg-6 mb-4">
+					<label for="department_id" class="d-block font-weight-bold text-gray-700">Department <span class="text-muted font-weight-normal">(optional)</span></label>
+					<select name="department_id" id="department_id" class="form-control @error('department_id') is-invalid @enderror">
+						<option value="">All departments in selected college</option>
+					</select>
+					<small class="form-text text-muted">Select a department to target only that department's students.</small>
+					<small class="form-text text-muted">If left as All departments, students without department assignment will be mapped using available college departments.</small>
+					@error('department_id')
+						<div class="invalid-feedback d-block">{{ $message }}</div>
+					@enderror
+				</div>
+			</div>
+
+			<div class="row">
 				<div class="col-lg-6 mb-4">
 					<label for="clearance_title" class="d-block font-weight-bold text-gray-700">Clearance Title <span class="text-danger">*</span></label>
 					<input
@@ -231,16 +249,76 @@
 			<div class="d-flex justify-content-between align-items-center border-top pt-3">
 				<div class="text-muted small">
 					<i class="fas fa-info-circle mr-1"></i>
-					Selected checklist items will appear on the student clearance sheet.
+					Selected checklist items will be assigned to all students in your selected scope.
 				</div>
 				<div>
-					<a href="{{ route('staff.clearances.index') }}" class="btn btn-light border mr-2">Cancel</a>
+					<a href="{{ route('admin.clearances.index') }}" class="btn btn-light border mr-2">Cancel</a>
 					<button type="submit" class="btn btn-primary">
 						<i class="fas fa-save mr-1"></i> Save Clearance
 					</button>
 				</div>
 			</div>
 		</form>
+		@else
+		<div class="alert alert-warning mb-0">You do not have permission to create clearances.</div>
+		@endif
 	</div>
 </div>
+
+@push('scripts')
+<script>
+	(function () {
+		var collegeSelect = document.getElementById('college_id');
+		var departmentSelect = document.getElementById('department_id');
+		var selectedDepartment = '{{ old('department_id', '') }}';
+
+		function resetDepartments(placeholder) {
+			departmentSelect.innerHTML = '';
+			var option = document.createElement('option');
+			option.value = '';
+			option.textContent = placeholder;
+			departmentSelect.appendChild(option);
+		}
+
+		function loadDepartments(collegeId) {
+			if (!collegeId) {
+				resetDepartments('All departments in selected college');
+				return;
+			}
+
+			resetDepartments('Loading departments...');
+
+			fetch('{{ url('/admin/get-departments') }}/' + collegeId)
+				.then(function (response) {
+					return response.json();
+				})
+				.then(function (departments) {
+					resetDepartments('All departments in selected college');
+
+					departments.forEach(function (department) {
+						var option = document.createElement('option');
+						option.value = department.id;
+						option.textContent = department.name;
+
+						if (String(department.id) === String(selectedDepartment)) {
+							option.selected = true;
+						}
+
+						departmentSelect.appendChild(option);
+					});
+				})
+				.catch(function () {
+					resetDepartments('Unable to load departments');
+				});
+		}
+
+		collegeSelect.addEventListener('change', function () {
+			selectedDepartment = '';
+			loadDepartments(this.value);
+		});
+
+		loadDepartments(collegeSelect.value);
+	})();
+</script>
+@endpush
 @endsection

@@ -1,6 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $canManageColleges = auth()->user()->hasPermission('tenant.colleges.manage');
+    $canManageDepartments = auth()->user()->hasPermission('tenant.departments.manage');
+    $canManageStudents = auth()->user()->hasPermission('tenant.students.manage');
+    $canManageStaff = auth()->user()->hasPermission('tenant.staff.manage');
+    $canViewReports = auth()->user()->hasPermission('tenant.reports.view');
+@endphp
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Admin Dashboard</h1>
 </div>
@@ -25,7 +32,11 @@
                 </div>
             </div>
             <div class="card-footer">
-                <a href="{{ route('admin.colleges.index') }}" class="small">Manage Colleges →</a>
+                @if($canManageColleges)
+                    <a href="{{ route('admin.colleges.index') }}" class="small">Manage Colleges →</a>
+                @else
+                    <span class="small text-muted">Not allowed</span>
+                @endif
             </div>
         </div>
     </div>
@@ -48,7 +59,11 @@
                 </div>
             </div>
             <div class="card-footer">
-                <a href="{{ route('admin.departments.index') }}" class="small">Manage Departments →</a>
+                @if($canManageDepartments)
+                    <a href="{{ route('admin.departments.index') }}" class="small">Manage Departments →</a>
+                @else
+                    <span class="small text-muted">Not allowed</span>
+                @endif
             </div>
         </div>
     </div>
@@ -71,7 +86,11 @@
                 </div>
             </div>
             <div class="card-footer">
-                <a href="{{ route('admin.students.index') }}" class="small">Manage Students →</a>
+                @if($canManageStudents)
+                    <a href="{{ route('admin.students.index') }}" class="small">Manage Students →</a>
+                @else
+                    <span class="small text-muted">Not allowed</span>
+                @endif
             </div>
         </div>
     </div>
@@ -94,7 +113,11 @@
                 </div>
             </div>
             <div class="card-footer">
-                <a href="{{ route('admin.staff.index') }}" class="small">Manage Staff →</a>
+                @if($canManageStaff)
+                    <a href="{{ route('admin.staff.index') }}" class="small">Manage Staff →</a>
+                @else
+                    <span class="small text-muted">Not allowed</span>
+                @endif
             </div>
         </div>
     </div>
@@ -108,21 +131,31 @@
                 <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
             </div>
             <div class="card-body">
-                <a href="{{ route('admin.colleges.create') }}" class="btn btn-primary mb-2">
-                    <i class="fas fa-plus"></i> Add College
-                </a>
-                <a href="{{ route('admin.departments.create') }}" class="btn btn-success mb-2">
-                    <i class="fas fa-plus"></i> Add Department
-                </a>
-                <a href="{{ route('admin.students.create') }}" class="btn btn-info mb-2">
-                    <i class="fas fa-user-plus"></i> Add Student
-                </a>
-                <a href="{{ route('admin.staff.create') }}" class="btn btn-warning mb-2">
-                    <i class="fas fa-user-tie"></i> Add Staff
-                </a>
-                <a href="{{ route('admin.reports.index') }}" class="btn btn-danger mb-2">
-                    <i class="fas fa-chart-bar"></i> View Reports
-                </a>
+                @if($canManageColleges)
+                    <a href="{{ route('admin.colleges.create') }}" class="btn btn-primary mb-2">
+                        <i class="fas fa-plus"></i> Add College
+                    </a>
+                @endif
+                @if($canManageDepartments)
+                    <a href="{{ route('admin.departments.create') }}" class="btn btn-success mb-2">
+                        <i class="fas fa-plus"></i> Add Department
+                    </a>
+                @endif
+                @if($canManageStudents)
+                    <a href="{{ route('admin.students.create') }}" class="btn btn-info mb-2">
+                        <i class="fas fa-user-plus"></i> Add Student
+                    </a>
+                @endif
+                @if($canManageStaff)
+                    <a href="{{ route('admin.staff.create') }}" class="btn btn-warning mb-2">
+                        <i class="fas fa-user-tie"></i> Add Staff
+                    </a>
+                @endif
+                @if($canViewReports)
+                    <a href="{{ route('admin.reports.index') }}" class="btn btn-danger mb-2">
+                        <i class="fas fa-chart-bar"></i> View Reports
+                    </a>
+                @endif
             </div>
         </div>
     </div>

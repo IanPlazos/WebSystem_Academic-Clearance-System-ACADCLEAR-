@@ -3,11 +3,16 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $canManageStudents = auth()->user()->hasPermission('tenant.students.manage');
+@endphp
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Students</h1>
-    <a href="{{ route('admin.students.create') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Add New Student
-    </a>
+    @if($canManageStudents)
+        <a href="{{ route('admin.students.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Student
+        </a>
+    @endif
 </div>
 
 <div class="card shadow mb-4">
@@ -47,19 +52,23 @@
                         </td>
                         <td>{{ $student->created_at->format('M d, Y') }}</td>
                         <td>
-                            <a href="{{ route('admin.students.edit', $student) }}" 
-                               class="btn btn-warning btn-sm">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <form action="{{ route('admin.students.destroy', $student) }}" 
-                                  method="POST" class="d-inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" 
-                                        onclick="return confirm('Delete this student? This will also delete all their clearances.')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                            @if($canManageStudents)
+                                <a href="{{ route('admin.students.edit', $student) }}" 
+                                   class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form action="{{ route('admin.students.destroy', $student) }}" 
+                                      method="POST" class="d-inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm" 
+                                            onclick="return confirm('Delete this student? This will also delete all their clearances.')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            @else
+                                <span class="text-muted">No actions</span>
+                            @endif
                         </td>
                     </tr>
                     @empty
