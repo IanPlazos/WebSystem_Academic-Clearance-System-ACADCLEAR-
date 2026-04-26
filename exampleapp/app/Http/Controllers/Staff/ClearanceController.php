@@ -33,10 +33,6 @@ class ClearanceController extends Controller
 
     private function canAccessClearance(User $user, Clearance $clearance): bool
     {
-        if ($this->isTenantAdmin($user)) {
-            return true;
-        }
-
         if (!$user->office_role) {
             return false;
         }
@@ -55,6 +51,15 @@ class ClearanceController extends Controller
         }
 
         return (int) $clearance->department_id === (int) $user->department_id;
+    }
+
+    private function canManageChecklistItem(User $user, Clearance $clearance, ClearanceChecklistItem $item): bool
+    {
+        if (!$this->canAccessClearance($user, $clearance)) {
+            return false;
+        }
+
+        return $item->office_role === $user->office_role;
     }
 
     /**
@@ -242,11 +247,7 @@ class ClearanceController extends Controller
         $actor = auth()->user();
         $canPersistApprovedByName = $this->canPersistApprovedByName();
 
-        if ($item->clearance_id !== $clearance->id || !$this->canAccessClearance($actor, $clearance)) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
-        if (!$this->isTenantAdmin($actor) && (!$actor->office_role || $item->office_role !== $actor->office_role)) {
+        if ($item->clearance_id !== $clearance->id || !$this->canManageChecklistItem($actor, $clearance, $item)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -358,43 +359,24 @@ class ClearanceController extends Controller
     public function approve(Clearance $clearance)
     {
         $actor = auth()->user();
-        $isTenantAdmin = $this->isTenantAdmin($actor);
 
         if (!$this->canAccessClearance($actor, $clearance)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        if ($isTenantAdmin) {
-            $payload = [
-                'status' => 'approved',
-                'approved_at' => now(),
-                'contact_person' => $actor->name,
-            ];
+        $payload = [
+            'status' => 'approved',
+            'approved_at' => now(),
+            'contact_person' => $actor->name,
+        ];
 
-            if ($this->canPersistApprovedByName()) {
-                $payload['approved_by_name'] = $actor->name;
-            }
-
-            $affected = $clearance->checklistItems()->update($payload);
-        } else {
-            if (!$actor->office_role) {
-                return response()->json(['error' => 'Unauthorized'], 403);
-            }
-
-            $payload = [
-                'status' => 'approved',
-                'approved_at' => now(),
-                'contact_person' => $actor->name,
-            ];
-
-            if ($this->canPersistApprovedByName()) {
-                $payload['approved_by_name'] = $actor->name;
-            }
-
-            $affected = $clearance->checklistItems()
-                ->where('office_role', $actor->office_role)
-                ->update($payload);
+        if ($this->canPersistApprovedByName()) {
+            $payload['approved_by_name'] = $actor->name;
         }
+
+        $affected = $clearance->checklistItems()
+            ->where('office_role', $actor->office_role)
+            ->update($payload);
 
         if ($affected === 0) {
             return response()->json(['error' => 'No clearance item assigned to your office role.'], 403);
@@ -415,7 +397,6 @@ class ClearanceController extends Controller
     public function reject(Request $request, Clearance $clearance)
     {
         $actor = auth()->user();
-        $isTenantAdmin = $this->isTenantAdmin($actor);
 
         if (!$this->canAccessClearance($actor, $clearance)) {
             return response()->json(['error' => 'Unauthorized'], 403);
@@ -425,18 +406,16 @@ class ClearanceController extends Controller
             'remarks' => 'required|string|max:500'
         ]);
 
-        $hasRoleItem = $isTenantAdmin
-            ? $clearance->checklistItems()->exists()
-            : $clearance->checklistItems()->where('office_role', $actor->office_role)->exists();
+        $hasRoleItem = $clearance->checklistItems()
+            ->where('office_role', $actor->office_role)
+            ->exists();
 
         if (!$hasRoleItem) {
             return response()->json(['error' => 'No clearance item assigned to your office role.'], 403);
         }
 
-        $checklistQuery = $clearance->checklistItems();
-        if (!$isTenantAdmin) {
-            $checklistQuery->where('office_role', $actor->office_role);
-        }
+        $checklistQuery = $clearance->checklistItems()
+            ->where('office_role', $actor->office_role);
 
         $payload = [
             'status' => 'pending',
@@ -467,9 +446,7 @@ class ClearanceController extends Controller
     public function bulkApprove(Request $request)
     {
         $actor = auth()->user();
-        $isTenantAdmin = $this->isTenantAdmin($actor);
-
-        if (!$isTenantAdmin && !$actor->office_role) {
+        if (!$actor->office_role) {
             return response()->json([
                 'success' => false,
                 'message' => 'No office role assigned to your account.'
@@ -483,28 +460,20 @@ class ClearanceController extends Controller
 
         $query = Clearance::whereIn('id', $validated['clearance_ids']);
 
-        if ($isTenantAdmin) {
-            $query->whereHas('student', function ($studentQuery) use ($actor) {
-                $studentQuery->where('college_id', $actor->college_id);
-            });
-        } else {
-            $query->whereHas('checklistItems', function ($itemQuery) use ($actor) {
-                    $itemQuery->where('office_role', $actor->office_role);
-                });
+        $query->whereHas('checklistItems', function ($itemQuery) use ($actor) {
+            $itemQuery->where('office_role', $actor->office_role);
+        });
 
-            if (filled($actor->department_id)) {
-                $query->where('department_id', $actor->department_id);
-            }
+        if (filled($actor->department_id)) {
+            $query->where('department_id', $actor->department_id);
         }
 
         $clearances = $query->get();
 
         $count = 0;
         foreach ($clearances as $clearance) {
-            $checklistQuery = $clearance->checklistItems();
-            if (!$isTenantAdmin) {
-                $checklistQuery->where('office_role', $actor->office_role);
-            }
+            $checklistQuery = $clearance->checklistItems()
+                ->where('office_role', $actor->office_role);
 
             $payload = [
                     'status' => 'approved',

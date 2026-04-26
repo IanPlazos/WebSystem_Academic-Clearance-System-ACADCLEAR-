@@ -4,9 +4,12 @@
 
 @section('content')
 @php
-    $canCreateClearance = auth()->user()->hasPermission('tenant.clearances.create');
-    $canExportClearance = auth()->user()->hasPermission('tenant.clearances.export');
-    $canUpdateClearance = auth()->user()->hasPermission('tenant.clearances.update');
+    $actor = auth()->user();
+    $canCreateClearance = $actor->hasPermission('tenant.clearances.create');
+    $canExportClearance = $actor->hasPermission('tenant.clearances.export');
+    $canUpdateClearance = $actor->hasPermission('tenant.clearances.update');
+    $actorOfficeRole = $actor->office_role;
+    $actorDepartmentId = $actor->department_id;
 @endphp
 @push('styles')
 <style>
@@ -67,6 +70,7 @@
         padding-top: 1rem;
         padding-bottom: 1rem;
         vertical-align: top;
+        border-color: rgba(150, 180, 220, 0.18);
     }
 
     .clearance-page .table tbody tr:hover {
@@ -87,6 +91,95 @@
 
     .clearance-page .checklist-card:last-child {
         margin-bottom: 0;
+    }
+
+    .clearance-page .checklist-more-toggle {
+        margin-top: 0.55rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #8fd5ff;
+    }
+
+    .clearance-page .checklist-more-toggle:hover {
+        color: #b8e8ff;
+        text-decoration: none;
+    }
+
+    .clearance-page .student-block strong {
+        display: block;
+        font-size: 0.98rem;
+        line-height: 1.25rem;
+        margin-bottom: 0.15rem;
+    }
+
+    .clearance-page .student-block .student-id {
+        color: #8ec7ff;
+        font-size: 0.78rem;
+        display: block;
+        margin-bottom: 0.1rem;
+    }
+
+    .clearance-page .table-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.22rem 0.55rem;
+        border-radius: 999px;
+        background: rgba(90, 180, 255, 0.12);
+        border: 1px solid rgba(132, 176, 232, 0.25);
+        color: #cfe8ff;
+        font-size: 0.76rem;
+        font-weight: 600;
+        margin-bottom: 0.45rem;
+    }
+
+    .clearance-page .table-main {
+        color: #f5fbff;
+        font-size: 0.9rem;
+        line-height: 1.25rem;
+        font-weight: 600;
+    }
+
+    .clearance-page .table-sub {
+        color: #9bb4d3;
+        font-size: 0.78rem;
+        line-height: 1.2rem;
+        margin-top: 0.2rem;
+    }
+
+    .clearance-page .checklist-card-title {
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+        line-height: 1.2rem;
+    }
+
+    .clearance-page .checklist-meta {
+        margin: 0;
+        font-size: 0.78rem;
+        line-height: 1.2rem;
+        color: #9bb4d3;
+    }
+
+    .clearance-page .cell-muted {
+        color: #9bb4d3;
+        font-size: 0.82rem;
+    }
+
+    .clearance-page .request-date {
+        color: #dcecff;
+        font-size: 0.82rem;
+        white-space: nowrap;
+    }
+
+    .clearance-page .actions-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+    }
+
+    .clearance-page .actions-cell .btn {
+        min-width: 36px;
     }
 
     .clearance-page .checklist-card .badge {
@@ -232,57 +325,108 @@
                             <input type="checkbox" id="selectAll">
                         </th>
                         @endif
-                        <th>Student</th>
-                        <th>Department</th>
-                        <th>Clearance</th>
-                        <th>Office / Instructor</th>
-                        <th>Location</th>
-                        <th>Checklist</th>
+                        <th style="min-width: 240px;">Student</th>
+                        <th style="min-width: 150px;">Department</th>
+                        <th style="min-width: 170px;">Clearance</th>
+                        <th style="min-width: 170px;">Office / Instructor</th>
+                        <th style="min-width: 150px;">Location</th>
+                        <th style="min-width: 300px;">Checklist</th>
                         <th>Status</th>
                         <th>Remarks</th>
-                        <th>Request Date</th>
-                        <th width="150">Actions</th>
+                        <th style="min-width: 120px;">Request Date</th>
+                        <th style="min-width: 120px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($clearances as $clearance)
+                    @php
+                        $canActOnClearance = $canUpdateClearance && $actorOfficeRole
+                            && $clearance->checklistItems->contains(function ($checklistItem) use ($actorOfficeRole) {
+                                return $checklistItem->office_role === $actorOfficeRole;
+                            })
+                            && (blank($actorDepartmentId) || (int) $clearance->department_id === (int) $actorDepartmentId);
+                    @endphp
                     <tr>
                         @if($canUpdateClearance && (request('status') == 'pending' || !request('status')))
                         <td>
-                            <input type="checkbox" class="clearance-checkbox" value="{{ $clearance->id }}">
+                            @if($canActOnClearance)
+                                <input type="checkbox" class="clearance-checkbox" value="{{ $clearance->id }}">
+                            @endif
                         </td>
                         @endif
                         <td>
-                            <strong>{{ $clearance->student?->name ?? 'N/A' }}</strong><br>
-                            <small class="muted-note">{{ $clearance->student?->email ?? 'N/A' }}</small>
+                            <div class="student-block">
+                                <strong>{{ $clearance->student?->name ?? 'N/A' }}</strong>
+                                @php
+                                    $studentEmail = $clearance->student?->email;
+                                    $studentNumber = null;
+                                    if ($studentEmail && str_contains($studentEmail, '@')) {
+                                        $studentNumber = explode('@', $studentEmail)[0];
+                                    }
+                                @endphp
+                                @if($studentNumber)
+                                    <span class="student-id">{{ $studentNumber }}</span>
+                                @endif
+                                <small class="muted-note">{{ $studentEmail ?? 'N/A' }}</small>
+                            </div>
                         </td>
-                        <td>{{ $clearance->department?->name ?? 'N/A' }}</td>
-                        <td>{{ $clearance->clearance_title ?? 'Department Clearance' }}</td>
-                        <td>{{ $clearance->office_or_instructor ?? 'Assigned staff' }}</td>
-                        <td>{{ $clearance->approval_location ?? 'Department Office' }}</td>
+                        <td>
+                            <div class="table-chip"><i class="fas fa-building"></i> Department</div>
+                            <div class="table-main">{{ $clearance->department?->name ?? 'N/A' }}</div>
+                        </td>
+                        <td>
+                            <div class="table-chip"><i class="fas fa-file-alt"></i> Type</div>
+                            <div class="table-main">{{ $clearance->clearance_title ?? 'Department Clearance' }}</div>
+                        </td>
+                        <td>
+                            <div class="table-chip"><i class="fas fa-user-tie"></i> Assigned To</div>
+                            <div class="table-main">{{ $clearance->office_or_instructor ?? 'Assigned staff' }}</div>
+                        </td>
+                        <td>
+                            <div class="table-chip"><i class="fas fa-map-marker-alt"></i> Office</div>
+                            <div class="table-main">{{ $clearance->approval_location ?? 'Department Office' }}</div>
+                        </td>
                         <td>
                             @if($clearance->checklistItems->isNotEmpty())
+                                @php
+                                    $checklistItems = $clearance->checklistItems->values();
+                                    $visibleChecklistItems = $checklistItems->take(2);
+                                    $hiddenChecklistItems = $checklistItems->slice(2);
+                                    $collapseId = 'checklistMore' . $clearance->id;
+                                @endphp
                                 <ul class="list-unstyled mb-0">
-                                    @foreach($clearance->checklistItems as $item)
+                                    @foreach($visibleChecklistItems as $item)
                                         <li class="checklist-card">
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <div>
-                                                    <strong>{{ $item->item_name }}</strong>
+                                                    <strong class="checklist-card-title">{{ $item->item_name }}</strong>
                                                     @if($item->contact_person)
-                                                        <div><small class="muted-note">{{ $item->contact_person }}</small></div>
+                                                        <p class="checklist-meta">
+                                                            <i class="fas fa-user mr-1"></i>{{ $item->contact_person }}
+                                                        </p>
                                                     @endif
                                                     @if($item->location)
-                                                        <div><small class="muted-note">{{ $item->location }}</small></div>
+                                                        <p class="checklist-meta">
+                                                            <i class="fas fa-map-marker-alt mr-1"></i>{{ $item->location }}
+                                                        </p>
                                                     @endif
                                                     @if($item->approved_by_name)
-                                                        <div><small class="text-success">Signed by: {{ $item->approved_by_name }}</small></div>
+                                                        <p class="checklist-meta text-success mb-0">
+                                                            <i class="fas fa-signature mr-1"></i>Signed by: {{ $item->approved_by_name }}
+                                                        </p>
                                                     @endif
                                                 </div>
                                                 <span class="badge bg-{{ $item->status === 'approved' ? 'success' : 'secondary' }}">
                                                     {{ ucfirst($item->status) }}
                                                 </span>
                                             </div>
-                                            @if($canUpdateClearance)
+                                            @php
+                                                $canActOnChecklistItem = $canUpdateClearance
+                                                    && $actorOfficeRole
+                                                    && $item->office_role === $actorOfficeRole
+                                                    && (blank($actorDepartmentId) || (int) $clearance->department_id === (int) $actorDepartmentId);
+                                            @endphp
+                                            @if($canActOnChecklistItem)
                                                 <form action="{{ route('admin.clearances.checklist.update', ['clearance' => $clearance->id, 'item' => $item->id]) }}" method="POST" class="mt-2">
                                                     @csrf
                                                     @if($item->status === 'approved')
@@ -307,8 +451,80 @@
                                         </li>
                                     @endforeach
                                 </ul>
+                                @if($hiddenChecklistItems->isNotEmpty())
+                                    <div class="collapse mt-2" id="{{ $collapseId }}">
+                                        <ul class="list-unstyled mb-0">
+                                            @foreach($hiddenChecklistItems as $item)
+                                                <li class="checklist-card">
+                                                    <div class="d-flex justify-content-between align-items-start">
+                                                        <div>
+                                                            <strong class="checklist-card-title">{{ $item->item_name }}</strong>
+                                                            @if($item->contact_person)
+                                                                <p class="checklist-meta">
+                                                                    <i class="fas fa-user mr-1"></i>{{ $item->contact_person }}
+                                                                </p>
+                                                            @endif
+                                                            @if($item->location)
+                                                                <p class="checklist-meta">
+                                                                    <i class="fas fa-map-marker-alt mr-1"></i>{{ $item->location }}
+                                                                </p>
+                                                            @endif
+                                                            @if($item->approved_by_name)
+                                                                <p class="checklist-meta text-success mb-0">
+                                                                    <i class="fas fa-signature mr-1"></i>Signed by: {{ $item->approved_by_name }}
+                                                                </p>
+                                                            @endif
+                                                        </div>
+                                                        <span class="badge bg-{{ $item->status === 'approved' ? 'success' : 'secondary' }}">
+                                                            {{ ucfirst($item->status) }}
+                                                        </span>
+                                                    </div>
+                                                    @php
+                                                        $canActOnChecklistItem = $canUpdateClearance
+                                                            && $actorOfficeRole
+                                                            && $item->office_role === $actorOfficeRole
+                                                            && (blank($actorDepartmentId) || (int) $clearance->department_id === (int) $actorDepartmentId);
+                                                    @endphp
+                                                    @if($canActOnChecklistItem)
+                                                        <form action="{{ route('admin.clearances.checklist.update', ['clearance' => $clearance->id, 'item' => $item->id]) }}" method="POST" class="mt-2">
+                                                            @csrf
+                                                            @if($item->status === 'approved')
+                                                                <input type="hidden" name="status" value="pending">
+                                                                <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                                    Mark Pending
+                                                                </button>
+                                                            @else
+                                                                <button
+                                                                    type="button"
+                                                                    class="btn btn-sm btn-outline-success"
+                                                                    data-action="{{ route('admin.clearances.checklist.update', ['clearance' => $clearance->id, 'item' => $item->id]) }}"
+                                                                    data-item-name="{{ $item->item_name }}"
+                                                                    data-staff-name="{{ auth()->user()->name }}"
+                                                                    onclick="openApproveItemModal(this)"
+                                                                >
+                                                                    Mark Approved
+                                                                </button>
+                                                            @endif
+                                                        </form>
+                                                    @endif
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                    <a
+                                        href="#{{ $collapseId }}"
+                                        class="checklist-more-toggle d-inline-block"
+                                        data-toggle="collapse"
+                                        data-bs-toggle="collapse"
+                                        role="button"
+                                        aria-expanded="false"
+                                        aria-controls="{{ $collapseId }}"
+                                    >
+                                        Show {{ $hiddenChecklistItems->count() }} more item{{ $hiddenChecklistItems->count() > 1 ? 's' : '' }}
+                                    </a>
+                                @endif
                             @else
-                                <span class="text-muted">No checklist</span>
+                                <span class="cell-muted">No checklist</span>
                             @endif
                         </td>
                         <td>
@@ -329,27 +545,34 @@
                                     <i class="fas fa-comment"></i> View
                                 </span>
                             @else
-                                <span class="muted-note">—</span>
+                                <span class="cell-muted">No remarks</span>
                             @endif
                         </td>
-                        <td>{{ $clearance->created_at->format('M d, Y') }}</td>
                         <td>
-                            @if($canUpdateClearance && $clearance->status == 'pending')
+                            <div class="request-date">{{ $clearance->created_at->format('M d, Y') }}</div>
+                            <div class="table-sub">{{ $clearance->created_at->format('h:i A') }}</div>
+                        </td>
+                        <td>
+                            <div class="actions-cell">
+                            @if($canActOnClearance && $clearance->status == 'pending')
                                 <button class="btn btn-success btn-sm approve-btn" 
                                         data-id="{{ $clearance->id }}"
+                                        title="Approve this clearance"
                                         onclick="approveClearance({{ $clearance->id }})">
                                     <i class="fas fa-check"></i>
                                 </button>
                                 
                                 <button class="btn btn-danger btn-sm reject-btn" 
                                         data-id="{{ $clearance->id }}"
+                                        title="Reject this clearance"
                                         type="button"
                                         onclick="rejectClearance({{ $clearance->id }})">
                                     <i class="fas fa-times"></i>
                                 </button>
                             @else
-                                <span class="muted-note">—</span>
+                                <span class="cell-muted">No actions</span>
                             @endif
+                            </div>
                         </td>
                     </tr>
 
