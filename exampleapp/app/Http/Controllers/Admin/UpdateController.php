@@ -101,12 +101,10 @@ class UpdateController extends Controller
     {
         if (PHP_OS_FAMILY === 'Windows') {
             return [
-                'powershell.exe',
-                '-NoProfile',
-                '-ExecutionPolicy',
-                'Bypass',
-                '-File',
-                base_path('scripts/apply-latest-update.ps1'),
+                'cmd.exe',
+                '/d',
+                '/c',
+                base_path('scripts/apply-latest-update.cmd'),
                 '-Branch',
                 (string) config('services.app_updates.branch', 'master'),
             ];

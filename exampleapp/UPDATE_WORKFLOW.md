@@ -36,7 +36,7 @@ What this does:
 If you need to run the updater manually instead, use:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\apply-latest-update.ps1 -Branch master
+.\scripts\apply-latest-update.cmd -Branch master
 ```
 
 5. Refresh app and confirm footer/version matches latest `VERSION`.
@@ -44,5 +44,5 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\apply-latest-u
 ## Notes
 - The updater refuses to run if `exampleapp` has uncommitted changes, because pulling over local edits can overwrite work.
 - The Update page shows the exact changed files and disables install until those local changes are committed or stashed.
-- Use `apply-latest-update.ps1` directly if you want to see the command output in a terminal.
+- On Windows, the Update page runs `scripts/apply-latest-update.cmd` so it does not depend on PowerShell loading correctly inside the web server process.
 - Keep branch name consistent (`master` in current repo).
