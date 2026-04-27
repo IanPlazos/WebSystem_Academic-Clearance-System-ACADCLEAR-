@@ -69,7 +69,7 @@ class UpdateController extends Controller
 
             $output = trim($result->output() . PHP_EOL . $result->errorOutput());
             $logs[0]['exit_code'] = $result->exitCode();
-            $logs[0]['output'] = $output !== '' ? $output : 'No output.';
+            $logs[0]['output'] = $output !== '' ? $output : $this->emptyOutputMessage($result->exitCode());
 
             if ($result->failed()) {
                 $failureSummary = $this->failureSummary($logs[0]['output']);
@@ -104,7 +104,7 @@ class UpdateController extends Controller
                 'cmd.exe',
                 '/d',
                 '/c',
-                base_path('scripts/apply-latest-update.cmd'),
+                'scripts\\apply-latest-update.cmd',
                 '-Branch',
                 (string) config('services.app_updates.branch', 'master'),
             ];
@@ -166,5 +166,14 @@ class UpdateController extends Controller
         $lastLine = trim((string) ($errorLines !== [] ? end($errorLines) : end($lines)));
 
         return 'Last error: ' . $lastLine;
+    }
+
+    private function emptyOutputMessage(?int $exitCode): string
+    {
+        if ($exitCode === 1 && PHP_OS_FAMILY === 'Windows') {
+            return 'Updater exited before producing output. Check that the web server user can read the app folder and write to the repository .git folder.';
+        }
+
+        return 'No output.';
     }
 }

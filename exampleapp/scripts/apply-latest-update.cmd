@@ -24,32 +24,38 @@ if exist "%SCRIPT_DIR%composer.json" (
     for %%I in ("%SCRIPT_DIR%..") do set "APP_ROOT=%%~fI"
 )
 
-pushd "%APP_ROOT%" || exit /b 1
+if "%ACADCLEAR_UPDATE_DEBUG%"=="1" (
+    echo DEBUG: SCRIPT_DIR=%SCRIPT_DIR%
+    echo DEBUG: APP_ROOT=%APP_ROOT%
+)
+
+pushd "%APP_ROOT%" || (
+    echo ERROR: Cannot access app root: "%APP_ROOT%"
+    exit /b 1
+)
+
+if "%ACADCLEAR_UPDATE_DEBUG%"=="1" echo DEBUG: CWD=%CD%
 
 git rev-parse --is-inside-work-tree >nul
 if errorlevel 1 (
-    echo Command failed with exit code %ERRORLEVEL%: git rev-parse --is-inside-work-tree
+    echo ERROR: Command failed with exit code %ERRORLEVEL%: git rev-parse --is-inside-work-tree
     goto fail
 )
 
-set "APP_PREFIX="
-for /f "delims=" %%A in ('git rev-parse --show-prefix') do set "APP_PREFIX=%%A"
-set "APP_PATHSPEC=."
-if defined APP_PREFIX set "APP_PATHSPEC=:/%APP_PREFIX%"
-
-set "HAS_CHANGES="
-for /f "delims=" %%A in ('git status --short -- "!APP_PATHSPEC!"') do (
-    if not defined HAS_CHANGES (
-        echo Uncommitted changes found inside exampleapp:
-        set "HAS_CHANGES=1"
-    )
-    echo   %%A
-)
-
-if defined HAS_CHANGES (
-    echo Commit/stash your current changes first, then run update script again.
+set "GIT_DIR="
+for /f "delims=" %%A in ('git rev-parse --git-dir') do set "GIT_DIR=%%A"
+if errorlevel 1 (
+    echo ERROR: Command failed with exit code %ERRORLEVEL%: git rev-parse --git-dir
     goto fail
 )
+
+set "GIT_WRITE_TEST=%GIT_DIR%\acadclear-update-write-test.tmp"
+break > "%GIT_WRITE_TEST%" 2>nul
+if errorlevel 1 (
+    echo ERROR: The updater cannot write to "%GIT_DIR%". Give the web server user write permission to this repository's .git folder, then try again.
+    goto fail
+)
+del "%GIT_WRITE_TEST%" >nul 2>nul
 
 echo Fetching latest changes...
 call :run git fetch origin --tags
@@ -57,7 +63,7 @@ if errorlevel 1 goto fail
 
 git show-ref --verify --quiet "refs/remotes/origin/%BRANCH%"
 if errorlevel 1 (
-    echo Remote branch not found: origin/%BRANCH%. Check APP_UPDATE_BRANCH in .env.
+    echo ERROR: Remote branch not found: origin/%BRANCH%. Check APP_UPDATE_BRANCH in .env.
     goto fail
 )
 
@@ -106,7 +112,7 @@ set "COMMAND=%*"
 %*
 set "EXIT_CODE=%ERRORLEVEL%"
 if not "%EXIT_CODE%"=="0" (
-    echo Command failed with exit code %EXIT_CODE%: %COMMAND%
+    echo ERROR: Command failed with exit code %EXIT_CODE%: %COMMAND%
     exit /b %EXIT_CODE%
 )
 exit /b 0
