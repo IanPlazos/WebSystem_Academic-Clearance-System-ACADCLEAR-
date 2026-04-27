@@ -37,7 +37,7 @@
         @endif
 
         <p class="mb-2 text-gray-700">
-            Use this button after the programmer deploys a new version. It applies tenant-side update steps safely.
+            Use this button after the programmer publishes a new version. It pulls the latest code from GitHub, installs dependencies, builds assets, and runs Laravel update tasks.
         </p>
         <p class="mb-4"><strong>Current Version:</strong> {{ $currentVersion }}</p>
         <p class="mb-4"><strong>Latest Version:</strong> {{ $latestVersion ?? 'Unavailable' }}</p>

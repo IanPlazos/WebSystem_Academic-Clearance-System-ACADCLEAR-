@@ -6,8 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Services\AppUpdateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Process;
 use Illuminate\View\View;
+use Throwable;
 
 class UpdateController extends Controller
 {
@@ -39,39 +40,60 @@ class UpdateController extends Controller
                 ->with('update_success', 'App is already updated to the latest version (' . ($status['current_version'] ?? 'current') . ').');
         }
 
-        $steps = [
-            'Run database migrations' => ['migrate', ['--force' => true]],
-            'Clear application cache' => ['cache:clear', []],
-            'Clear config cache' => ['config:clear', []],
-            'Clear view cache' => ['view:clear', []],
-        ];
+        $command = $this->updateCommand();
+        $logs = [[
+            'label' => 'Download latest code and run update tasks',
+            'command' => basename((string) $command[0]) . ' scripts/apply-latest-update.ps1',
+            'exit_code' => null,
+            'output' => 'Starting update...',
+        ]];
 
-        $logs = [];
+        try {
+            $result = Process::path(base_path())
+                ->timeout((int) config('services.app_updates.timeout', 600))
+                ->run($command);
 
-        foreach ($steps as $label => [$command, $arguments]) {
-            $exitCode = Artisan::call($command, $arguments);
-            $output = trim(Artisan::output());
+            $output = trim($result->output() . PHP_EOL . $result->errorOutput());
+            $logs[0]['exit_code'] = $result->exitCode();
+            $logs[0]['output'] = $output !== '' ? $output : 'No output.';
 
-            $logs[] = [
-                'label' => $label,
-                'command' => $command,
-                'exit_code' => $exitCode,
-                'output' => $output,
-            ];
-
-            if ($exitCode !== 0) {
+            if ($result->failed()) {
                 return redirect()
                     ->route('admin.update.index')
-                    ->with('update_error', 'Update failed while running: ' . $label)
+                    ->with('update_error', 'Update failed while downloading or applying the latest code.')
                     ->with('update_logs', $logs);
             }
+        } catch (Throwable $e) {
+            $logs[0]['exit_code'] = 1;
+            $logs[0]['output'] = $e->getMessage();
+
+            return redirect()
+                ->route('admin.update.index')
+                ->with('update_error', 'Update failed while starting the updater script.')
+                ->with('update_logs', $logs);
         }
 
         $this->appUpdateService->clearStatusCache();
 
         return redirect()
             ->route('admin.update.index')
-            ->with('update_success', 'Update steps completed successfully. If new code was deployed, this tenant is now updated.')
+            ->with('update_success', 'Latest version installed successfully.')
             ->with('update_logs', $logs);
+    }
+
+    private function updateCommand(): array
+    {
+        $shell = PHP_OS_FAMILY === 'Windows' ? 'powershell' : 'pwsh';
+
+        return [
+            $shell,
+            '-NoProfile',
+            '-ExecutionPolicy',
+            'Bypass',
+            '-File',
+            base_path('scripts/apply-latest-update.ps1'),
+            '-Branch',
+            (string) config('services.app_updates.branch', 'master'),
+        ];
     }
 }
