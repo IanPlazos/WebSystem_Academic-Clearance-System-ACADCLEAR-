@@ -170,9 +170,5 @@
         </div>
     </div>
 </div>
-<<<<<<< HEAD
-@endsection
-=======
 </div>
 @endsection
->>>>>>> 4ffcd46a1b52041b2befc4b727403c9270a783bf
