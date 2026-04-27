@@ -43,7 +43,7 @@ class UpdateController extends Controller
         $command = $this->updateCommand();
         $logs = [[
             'label' => 'Download latest code and run update tasks',
-            'command' => basename((string) $command[0]) . ' scripts/apply-latest-update.ps1',
+            'command' => basename((string) $command[0]) . ' scripts/' . (PHP_OS_FAMILY === 'Windows' ? 'apply-latest-update.cmd' : 'apply-latest-update.ps1'),
             'exit_code' => null,
             'output' => 'Starting update...',
         ]];
@@ -83,10 +83,19 @@ class UpdateController extends Controller
 
     private function updateCommand(): array
     {
-        $shell = PHP_OS_FAMILY === 'Windows' ? 'powershell' : 'pwsh';
+        if (PHP_OS_FAMILY === 'Windows') {
+            return [
+                'cmd',
+                '/d',
+                '/c',
+                base_path('scripts/apply-latest-update.cmd'),
+                '-Branch',
+                (string) config('services.app_updates.branch', 'master'),
+            ];
+        }
 
         return [
-            $shell,
+            'pwsh',
             '-NoProfile',
             '-ExecutionPolicy',
             'Bypass',

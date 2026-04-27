@@ -26,7 +26,20 @@ try {
         throw "Command failed with exit code ${LASTEXITCODE}: git rev-parse --is-inside-work-tree"
     }
 
-    $status = git status --short -- .
+    $appPrefix = git rev-parse --show-prefix
+    if ($LASTEXITCODE -ne 0) {
+        throw "Command failed with exit code ${LASTEXITCODE}: git rev-parse --show-prefix"
+    }
+
+    $appPathspec = "."
+    if (-not $appPrefix) {
+        $appPathspec = "."
+    } else {
+        $appPathspec = ":/$appPrefix"
+    }
+
+    $status = git status --short -- $appPathspec
+
     if ($status) {
         Write-Host "Uncommitted changes found inside exampleapp:" -ForegroundColor Yellow
         $status | ForEach-Object { Write-Host "  $_" }
