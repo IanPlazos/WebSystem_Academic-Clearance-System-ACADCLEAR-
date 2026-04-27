@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+## v1.0.7 - 2026-04-27
+
+### Plan enforcement and student limits
+- Enforced strict student caps per subscribed plan across all tenants: `Basic` (500), `Standard` (2000), and `Premium` (unlimited).
+- Added server-side plan-limit checks in both admin student creation and self-registration flows to block over-cap student creation.
+- Corrected tenant limit handling so plans with `max_students = null` are treated as unlimited instead of blocked.
+
+### Plan catalog consistency
+- Updated tenant plan request flow to use canonical pricing per selected plan and keep `Premium` fixed at `₱20,000.00` on submission.
+- Aligned central app plan-request validation and normalization to accept `Premium` while preserving legacy `Enterprise` compatibility.
+- Updated central plan seed data and super-admin plan UI labels to use `Premium` naming consistently.
+
+### Tenant-aware exports
+- Updated report PDF/CSV export branding to use the active tenant name instead of a hardcoded school name.
+- Rebuilt report export controller logic to resolve tenant identity consistently for generated reports.
+
 ## v1.0.6 - 2026-04-26
 
 ### Update system reliability

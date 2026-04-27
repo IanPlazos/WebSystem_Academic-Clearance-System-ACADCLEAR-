@@ -1,16 +1,20 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Clearance;
 use App\Models\College;
 use App\Models\Department;
-use App\Models\User;
-use App\Models\Clearance;
+use App\Services\TenantService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
+    public function __construct(private readonly TenantService $tenantService)
+    {
+    }
+
     /**
      * Display main reports dashboard
      */
@@ -21,20 +25,15 @@ class ReportController extends Controller
         $dateFrom = $request->get('date_from', now()->subMonth()->format('Y-m-d'));
         $dateTo = $request->get('date_to', now()->format('Y-m-d'));
 
-        // Get clearance statistics based on filters
         $stats = $this->getStatistics($selectedCollege, $dateFrom, $dateTo);
-        
-        // Get chart data
         $chartData = $this->getChartData($selectedCollege, $dateFrom, $dateTo);
-        
-        // Get department performance
         $departmentPerformance = $this->getDepartmentPerformance($selectedCollege, $dateFrom, $dateTo);
 
         return view('admin.reports.index', compact(
-            'colleges', 
-            'selectedCollege', 
-            'dateFrom', 
-            'dateTo', 
+            'colleges',
+            'selectedCollege',
+            'dateFrom',
+            'dateTo',
             'stats',
             'chartData',
             'departmentPerformance'
@@ -49,15 +48,22 @@ class ReportController extends Controller
         $selectedCollege = $request->get('college_id');
         $dateFrom = $request->get('date_from', now()->subMonth()->format('Y-m-d'));
         $dateTo = $request->get('date_to', now()->format('Y-m-d'));
+        $tenantName = $this->resolveTenantName();
 
         $stats = $this->getStatistics($selectedCollege, $dateFrom, $dateTo);
         $departmentPerformance = $this->getDepartmentPerformance($selectedCollege, $dateFrom, $dateTo);
-        
         $college = $selectedCollege ? College::find($selectedCollege) : null;
-        
+
         $pdf = app('dompdf.wrapper');
-        $pdf->loadView('admin.reports.pdf', compact('stats', 'departmentPerformance', 'college', 'dateFrom', 'dateTo'));
-        
+        $pdf->loadView('admin.reports.pdf', compact(
+            'stats',
+            'departmentPerformance',
+            'college',
+            'dateFrom',
+            'dateTo',
+            'tenantName'
+        ));
+
         return $pdf->download('clearance-report-' . now()->format('Y-m-d') . '.pdf');
     }
 
@@ -69,23 +75,23 @@ class ReportController extends Controller
         $selectedCollege = $request->get('college_id');
         $dateFrom = $request->get('date_from', now()->subMonth()->format('Y-m-d'));
         $dateTo = $request->get('date_to', now()->format('Y-m-d'));
+        $tenantName = $this->resolveTenantName();
 
-        $filename = "clearance-report-" . now()->format('Y-m-d') . ".csv";
+        $filename = 'clearance-report-' . now()->format('Y-m-d') . '.csv';
         $handle = fopen('php://output', 'w');
-        
+
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
 
-        // Add headers
+        fputcsv($handle, ['Institution:', $tenantName]);
         fputcsv($handle, ['Report Generated:', now()->format('F d, Y H:i:s')]);
         fputcsv($handle, ['Date Range:', $dateFrom, 'to', $dateTo]);
         if ($selectedCollege) {
             $college = College::find($selectedCollege);
-            fputcsv($handle, ['College:', $college->name]);
+            fputcsv($handle, ['College:', $college?->name ?? 'Unknown College']);
         }
-        fputcsv($handle, []); // Empty line
+        fputcsv($handle, []);
 
-        // Overall Statistics
         $stats = $this->getStatistics($selectedCollege, $dateFrom, $dateTo);
         fputcsv($handle, ['OVERALL STATISTICS']);
         fputcsv($handle, ['Total Clearances', $stats['total_clearances']]);
@@ -95,7 +101,6 @@ class ReportController extends Controller
         fputcsv($handle, ['Completion Rate', $stats['completion_rate'] . '%']);
         fputcsv($handle, []);
 
-        // Department Performance
         $departmentPerformance = $this->getDepartmentPerformance($selectedCollege, $dateFrom, $dateTo);
         fputcsv($handle, ['DEPARTMENT PERFORMANCE']);
         fputcsv($handle, ['Department', 'Total', 'Approved', 'Pending', 'Rejected', 'Rate']);
@@ -107,7 +112,7 @@ class ReportController extends Controller
                 $dept['approved'],
                 $dept['pending'],
                 $dept['rejected'],
-                $dept['rate'] . '%'
+                $dept['rate'] . '%',
             ]);
         }
 
@@ -128,7 +133,7 @@ class ReportController extends Controller
             ->whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59']);
 
         if ($selectedCollege) {
-            $query->whereHas('department', function($q) use ($selectedCollege) {
+            $query->whereHas('department', function ($q) use ($selectedCollege) {
                 $q->where('college_id', $selectedCollege);
             });
         }
@@ -140,7 +145,7 @@ class ReportController extends Controller
             'approved' => $clearances->where('status', 'approved')->count(),
             'pending' => $clearances->where('status', 'pending')->count(),
             'rejected' => $clearances->where('status', 'rejected')->count(),
-            'data' => $clearances->map(function($c) {
+            'data' => $clearances->map(function ($c) {
                 return [
                     'id' => $c->id,
                     'student' => $c->student->name,
@@ -149,9 +154,9 @@ class ReportController extends Controller
                     'status' => $c->status,
                     'remarks' => $c->remarks,
                     'created_at' => $c->created_at->format('Y-m-d H:i:s'),
-                    'updated_at' => $c->updated_at->format('Y-m-d H:i:s')
+                    'updated_at' => $c->updated_at->format('Y-m-d H:i:s'),
                 ];
-            })
+            }),
         ]);
     }
 
@@ -167,7 +172,7 @@ class ReportController extends Controller
         }
 
         if ($collegeId) {
-            $query->whereHas('department', function($q) use ($collegeId) {
+            $query->whereHas('department', function ($q) use ($collegeId) {
                 $q->where('college_id', $collegeId);
             });
         }
@@ -183,7 +188,7 @@ class ReportController extends Controller
             'pending' => $pending,
             'rejected' => $rejected,
             'completion_rate' => $total > 0 ? round(($approved / $total) * 100, 2) : 0,
-            'students_served' => (clone $query)->distinct('student_id')->count('student_id')
+            'students_served' => (clone $query)->distinct('student_id')->count('student_id'),
         ];
     }
 
@@ -192,13 +197,12 @@ class ReportController extends Controller
      */
     private function getChartData($collegeId = null, $dateFrom = null, $dateTo = null)
     {
-        // Status distribution
         $statusQuery = Clearance::query();
         if ($dateFrom && $dateTo) {
             $statusQuery->whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59']);
         }
         if ($collegeId) {
-            $statusQuery->whereHas('department', function($q) use ($collegeId) {
+            $statusQuery->whereHas('department', function ($q) use ($collegeId) {
                 $q->where('college_id', $collegeId);
             });
         }
@@ -208,15 +212,14 @@ class ReportController extends Controller
             'data' => [
                 (clone $statusQuery)->where('status', 'approved')->count(),
                 (clone $statusQuery)->where('status', 'pending')->count(),
-                (clone $statusQuery)->where('status', 'rejected')->count()
+                (clone $statusQuery)->where('status', 'rejected')->count(),
             ],
-            'colors' => ['#28a745', '#ffc107', '#dc3545']
+            'colors' => ['#28a745', '#ffc107', '#dc3545'],
         ];
 
-        // Daily trends (last 7 days)
         $trendQuery = Clearance::query();
         if ($collegeId) {
-            $trendQuery->whereHas('department', function($q) use ($collegeId) {
+            $trendQuery->whereHas('department', function ($q) use ($collegeId) {
                 $q->where('college_id', $collegeId);
             });
         }
@@ -231,11 +234,10 @@ class ReportController extends Controller
             $trendData['data'][] = $count;
         }
 
-        // College distribution (if no college selected)
         $collegeDistribution = [];
         if (!$collegeId) {
-            $colleges = College::withCount(['departments' => function($q) use ($dateFrom, $dateTo) {
-                $q->whereHas('clearances', function($cq) use ($dateFrom, $dateTo) {
+            $colleges = College::withCount(['departments' => function ($q) use ($dateFrom, $dateTo) {
+                $q->whereHas('clearances', function ($cq) use ($dateFrom, $dateTo) {
                     if ($dateFrom && $dateTo) {
                         $cq->whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59']);
                     }
@@ -251,7 +253,7 @@ class ReportController extends Controller
         return [
             'status' => $statusData,
             'trend' => $trendData,
-            'college' => $collegeDistribution
+            'college' => $collegeDistribution,
         ];
     }
 
@@ -271,7 +273,7 @@ class ReportController extends Controller
 
         foreach ($departments as $dept) {
             $clearanceQuery = Clearance::where('department_id', $dept->id);
-            
+
             if ($dateFrom && $dateTo) {
                 $clearanceQuery->whereBetween('created_at', [$dateFrom, $dateTo . ' 23:59:59']);
             }
@@ -290,12 +292,11 @@ class ReportController extends Controller
                 'pending' => $pending,
                 'rejected' => $rejected,
                 'rate' => $total > 0 ? round(($approved / $total) * 100, 2) : 0,
-                'avg_response_time' => $this->calculateAvgResponseTime($dept->id, $dateFrom, $dateTo)
+                'avg_response_time' => $this->calculateAvgResponseTime($dept->id, $dateFrom, $dateTo),
             ];
         }
 
-        // Sort by completion rate (highest first)
-        usort($performance, function($a, $b) {
+        usort($performance, function ($a, $b) {
             return $b['rate'] <=> $a['rate'];
         });
 
@@ -323,11 +324,23 @@ class ReportController extends Controller
         }
 
         $avgHours = round($totalHours / $clearances->count(), 1);
-        
+
         if ($avgHours < 24) {
             return $avgHours . ' hours';
-        } else {
-            return round($avgHours / 24, 1) . ' days';
         }
+
+        return round($avgHours / 24, 1) . ' days';
+    }
+
+    private function resolveTenantName(): string
+    {
+        $tenantDetails = $this->tenantService->getTenantDetails();
+        $tenantName = is_array($tenantDetails) ? trim((string) ($tenantDetails['name'] ?? '')) : '';
+
+        if ($tenantName !== '') {
+            return $tenantName;
+        }
+
+        return (string) config('app.name', 'AcadClear');
     }
 }

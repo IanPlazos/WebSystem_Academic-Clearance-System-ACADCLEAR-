@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\College;
 use App\Models\User;
+use App\Services\TenantService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,10 @@ use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
+    public function __construct(private readonly TenantService $tenantService)
+    {
+    }
+
     /**
      * Display the registration view.
      */
@@ -39,6 +44,18 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $currentStudents = User::where('role', 'student')->count();
+
+        if (! $this->tenantService->canAddMoreStudents($currentStudents)) {
+            $limit = $this->tenantService->getStudentLimit();
+            $planName = (string) $this->tenantService->getCurrentPlan();
+            $limitText = is_numeric($limit) ? (string) $limit : '0';
+
+            throw ValidationException::withMessages([
+                'email' => "Student limit reached for {$planName} plan ({$limitText} students). Registration is disabled until the plan is upgraded.",
+            ]);
+        }
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],

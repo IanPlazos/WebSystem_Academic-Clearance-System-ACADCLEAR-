@@ -41,7 +41,7 @@ class PlanRequestController extends Controller
         $validated = $request->validate([
             'tenant_slug' => ['nullable', 'string', 'max:255'],
             'tenant_name' => ['nullable', 'string', 'max:255'],
-            'plan_name' => ['required', 'string', 'in:Basic,Standard,Enterprise'],
+            'plan_name' => ['required', 'string', 'in:Basic,Standard,Premium,Enterprise'],
             'institution_name' => ['required', 'string', 'max:255'],
             'contact_person' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
@@ -56,10 +56,12 @@ class PlanRequestController extends Controller
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $normalizedPlanName = $validated['plan_name'] === 'Enterprise' ? 'Premium' : $validated['plan_name'];
+
         $planRequest = PlanRequest::create([
             'tenant_slug' => $validated['tenant_slug'] ?? null,
             'tenant_name' => $validated['tenant_name'] ?? null,
-            'plan_name' => $validated['plan_name'],
+            'plan_name' => $normalizedPlanName,
             'institution_name' => $validated['institution_name'],
             'contact_person' => $validated['contact_person'],
             'email' => $validated['email'],
@@ -95,7 +97,13 @@ class PlanRequestController extends Controller
             return back()->with('error', 'This request has already been approved.');
         }
 
-        $plan = Plan::where('name', $planRequest->plan_name)->first();
+        $plan = Plan::where('name', $planRequest->plan_name)
+            ->orWhere('slug', Str::slug($planRequest->plan_name))
+            ->first();
+
+        if (! $plan && $planRequest->plan_name === 'Premium') {
+            $plan = Plan::where('name', 'Enterprise')->orWhere('slug', 'enterprise')->first();
+        }
 
         if (!$plan) {
             return back()->with('error', 'No matching pricing plan found for this request.');

@@ -7,53 +7,61 @@ use Illuminate\Support\Facades\Http;
 
 class LandingController extends Controller
 {
+    private const PLAN_CATALOG = [
+        'Basic' => [
+            'price' => '₱1,500.00',
+            'students' => 'Up to 500 students',
+            'tag' => null,
+            'features' => [
+                'Standard clearance workflow',
+                'Department approval/rejection',
+                'Basic dashboard overview',
+                'Email notifications',
+                'Basic PDF summary',
+            ],
+        ],
+        'Standard' => [
+            'price' => '₱3,000.00',
+            'students' => 'Up to 2,000 students',
+            'tag' => 'Popular',
+            'features' => [
+                'Advanced reporting',
+                'Role-based access',
+                'Export to Excel/PDF',
+                'Priority support',
+                'API access',
+            ],
+        ],
+        'Premium' => [
+            'price' => '₱20,000.00',
+            'students' => 'Unlimited students',
+            'tag' => null,
+            'features' => [
+                'Multi-campus support',
+                'Full customization',
+                'Custom workflow',
+                'Institution branding',
+                'Dedicated support',
+            ],
+        ],
+    ];
+
     public function index()
     {
         if (auth()->check()) {
             return redirect()->route('dashboard');
         }
 
-        $plans = [
-            [
-                'name' => 'Basic',
-                'price' => '₱1,500.00',
-                'tag' => null,
-                'students' => 'Up to 500 students',
-                'features' => [
-                    'Standard clearance workflow',
-                    'Department approval/rejection',
-                    'Basic dashboard overview',
-                    'Email notifications',
-                    'Basic PDF summary',
-                ],
-            ],
-            [
-                'name' => 'Standard',
-                'price' => '₱3,000.00',
-                'tag' => 'Popular',
-                'students' => 'Up to 2,000 students',
-                'features' => [
-                    'Advanced reporting',
-                    'Role-based access',
-                    'Export to Excel/PDF',
-                    'Priority support',
-                    'API access',
-                ],
-            ],
-            [
-                'name' => 'Enterprise',
-                'price' => 'Custom Pricing',
-                'tag' => null,
-                'students' => 'Unlimited students',
-                'features' => [
-                    'Multi-campus support',
-                    'Full customization',
-                    'Custom workflow',
-                    'Institution branding',
-                    'Dedicated support',
-                ],
-            ],
-        ];
+        $plans = collect(self::PLAN_CATALOG)
+            ->map(fn (array $plan, string $name) => [
+                'name' => $name,
+                'price' => $plan['price'],
+                'tag' => $plan['tag'],
+                'students' => $plan['students'],
+                'features' => $plan['features'],
+            ])
+            ->values()
+            ->all();
 
         return view('landing', compact('plans'));
     }
@@ -61,7 +69,7 @@ class LandingController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'plan_name' => ['required', 'string', 'in:Basic,Standard,Enterprise'],
+            'plan_name' => ['required', 'string', 'in:Basic,Standard,Premium'],
             'institution_name' => ['required', 'string', 'max:255'],
             'contact_person' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
@@ -76,6 +84,9 @@ class LandingController extends Controller
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $selectedPlan = $validated['plan_name'];
+        $canonicalAmount = self::PLAN_CATALOG[$selectedPlan]['price'] ?? $validated['amount'];
+
         $centralUrl = rtrim((string) env('CENTRAL_APP_URL', 'http://localhost:8001'), '/');
 
         $response = Http::timeout(10)->post($centralUrl . '/api/plan-requests', [
@@ -87,7 +98,7 @@ class LandingController extends Controller
             'email' => $validated['email'],
             'contact_number' => $validated['contact_number'],
             'payment_method' => $validated['payment_method'],
-            'amount' => $validated['amount'],
+            'amount' => $canonicalAmount,
             'payment_reference' => $validated['payment_reference'] ?? null,
             'gcash_number' => $validated['gcash_number'] ?? null,
             'bank_name' => $validated['bank_name'] ?? null,

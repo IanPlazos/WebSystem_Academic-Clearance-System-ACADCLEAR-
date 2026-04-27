@@ -51,9 +51,9 @@ class PlanSeeder extends Seeder
                 ])
             ],
             [
-                'name' => 'Enterprise',
-                'slug' => 'enterprise',
-                'price' => 0,
+                'name' => 'Premium',
+                'slug' => 'premium',
+                'price' => 20000,
                 'max_students' => null,
                 'has_advanced_reports' => true,
                 'has_multi_campus' => true,

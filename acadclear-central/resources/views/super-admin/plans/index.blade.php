@@ -29,7 +29,7 @@
             <div class="card-header py-3 bg-{{ 
                 $plan->slug == 'basic' ? 'primary' : 
                 ($plan->slug == 'standard' ? 'success' : 
-                ($plan->slug == 'enterprise' ? 'info' : 'secondary')) 
+                (in_array($plan->slug, ['premium', 'enterprise']) ? 'info' : 'secondary')) 
             }} text-white">
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="m-0 font-weight-bold">{{ $plan->name }}</h5>

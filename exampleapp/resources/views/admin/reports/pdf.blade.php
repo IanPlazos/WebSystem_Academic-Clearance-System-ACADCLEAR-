@@ -101,7 +101,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>AcadClear - Bukidnon State University</h1>
+        <h1>AcadClear - {{ $tenantName ?? config('app.name', 'AcadClear') }}</h1>
         <h3>Clearance System Report</h3>
     </div>
 
@@ -197,7 +197,7 @@
 
     <div class="footer">
         <p>This report was generated automatically by the AcadClear Academic Clearance System.</p>
-        <p>Bukidnon State University - All rights reserved.</p>
+        <p>{{ $tenantName ?? config('app.name', 'AcadClear') }} - All rights reserved.</p>
     </div>
 </body>
 </html>

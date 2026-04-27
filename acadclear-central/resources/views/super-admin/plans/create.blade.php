@@ -64,7 +64,7 @@
                         <option value="">Select from above</option>
                         <option value="basic">Basic</option>
                         <option value="standard">Standard</option>
-                        <option value="enterprise">Enterprise</option>
+                        <option value="premium">Premium</option>
                     </select>
                 </div>
             </div>

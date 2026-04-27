@@ -233,7 +233,7 @@ class TenantService
         }
         
         $features = $this->getTenantFeatures($slug);
-        return $features['max_students'] ?? 0;
+        return array_key_exists('max_students', $features) ? $features['max_students'] : 0;
     }
 
     /**
@@ -242,12 +242,23 @@ class TenantService
     public function canAddMoreStudents($currentCount, $slug = null)
     {
         $limit = $this->getStudentLimit($slug);
+
+        // Null limit means unlimited students (Premium plan).
+        if ($limit === null) {
+            return true;
+        }
+
+        if (!is_numeric($limit)) {
+            return false;
+        }
+
+        $normalizedLimit = (int) $limit;
         
-        if ($limit === 0 || $limit === null) {
+        if ($normalizedLimit <= 0) {
             return false;
         }
         
-        return $currentCount < $limit;
+        return (int) $currentCount < $normalizedLimit;
     }
 
     /**

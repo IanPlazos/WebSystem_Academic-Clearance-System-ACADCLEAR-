@@ -6,6 +6,7 @@ use App\Mail\StaffAccountCreatedMail;
 use App\Models\User;
 use App\Models\College;
 use App\Models\Department;
+use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -14,9 +15,14 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
+    public function __construct(private readonly TenantService $tenantService)
+    {
+    }
+
     /**
      * Display list of students
      */
@@ -44,6 +50,18 @@ class UserController extends Controller
      */
     public function storeStudent(Request $request)
     {
+        $currentStudents = User::where('role', 'student')->count();
+
+        if (! $this->tenantService->canAddMoreStudents($currentStudents)) {
+            $limit = $this->tenantService->getStudentLimit();
+            $planName = (string) $this->tenantService->getCurrentPlan();
+            $limitText = is_numeric($limit) ? (string) $limit : '0';
+
+            throw ValidationException::withMessages([
+                'limit' => "Student limit reached for {$planName} plan ({$limitText} students). Upgrade your plan to add more students.",
+            ]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',

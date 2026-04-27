@@ -60,7 +60,7 @@
         <section id="plans" class="grid gap-6 lg:grid-cols-3">
             @foreach ($plans as $plan)
                 <article class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg">
-                    <div class="flex items-center justify-between bg-slate-900 px-6 py-4 text-white {{ $plan['name'] === 'Standard' ? 'bg-emerald-600' : ($plan['name'] === 'Enterprise' ? 'bg-cyan-600' : '') }}">
+                    <div class="flex items-center justify-between bg-slate-900 px-6 py-4 text-white {{ $plan['name'] === 'Standard' ? 'bg-emerald-600' : ($plan['name'] === 'Premium' ? 'bg-cyan-600' : '') }}">
                         <h2 class="text-2xl font-bold">{{ $plan['name'] }}</h2>
                         @if ($plan['tag'])
                             <span class="rounded-full bg-amber-300 px-3 py-1 text-xs font-bold uppercase text-amber-900">{{ $plan['tag'] }}</span>
