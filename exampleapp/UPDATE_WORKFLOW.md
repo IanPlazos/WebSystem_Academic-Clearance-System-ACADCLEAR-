@@ -31,16 +31,18 @@ What this does:
 1. Login as `school_admin`.
 2. Open **Update** page in the app (`/admin/update`).
 3. If GitHub has newer tag (like `v1.0.3`), app shows **New version available**.
-4. To apply code update safely on this laptop, run:
+4. Click **Install New Version**. The button runs the same updater script below: it pulls the latest code, installs dependencies, builds assets, runs migrations, and clears Laravel caches.
+
+If you need to run the updater manually instead, use:
 
 ```powershell
-cd .\scripts
-.\apply-latest-update.ps1 -Branch master
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\apply-latest-update.ps1 -Branch master
 ```
 
 5. Refresh app and confirm footer/version matches latest `VERSION`.
 
 ## Notes
-- The Update page button runs migration/cache steps. It does **not** perform `git pull` by itself.
-- Use `apply-latest-update.ps1` for actual code update on each laptop/server.
+- The updater refuses to run if `exampleapp` has uncommitted changes, because pulling over local edits can overwrite work.
+- The Update page shows the exact changed files and disables install until those local changes are committed or stashed.
+- Use `apply-latest-update.ps1` directly if you want to see the command output in a terminal.
 - Keep branch name consistent (`master` in current repo).

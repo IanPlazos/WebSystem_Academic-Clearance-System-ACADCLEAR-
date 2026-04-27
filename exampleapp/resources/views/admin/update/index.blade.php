@@ -36,6 +36,14 @@
             </div>
         @endif
 
+        @if(!empty($localChanges))
+            <div class="alert alert-danger" role="alert">
+                <div class="font-weight-bold mb-2">Update blocked: uncommitted local changes were found.</div>
+                <div class="mb-2">Commit or stash these files before installing a new version:</div>
+                <pre class="bg-white border rounded p-2 mb-0" style="white-space: pre-wrap;">{{ implode("\n", $localChanges) }}</pre>
+            </div>
+        @endif
+
         <p class="mb-2 text-gray-700">
             Use this button after the programmer publishes a new version. It pulls the latest code from GitHub, installs dependencies, builds assets, and runs Laravel update tasks.
         </p>
@@ -53,6 +61,10 @@
             @if($isUpToDate === true)
                 <button type="button" class="btn btn-success" disabled>
                     <i class="fas fa-check-circle mr-1"></i> Already Updated
+                </button>
+            @elseif(!empty($localChanges))
+                <button type="button" class="btn btn-secondary" disabled>
+                    <i class="fas fa-exclamation-triangle mr-1"></i> Resolve Local Changes First
                 </button>
             @else
                 <button type="submit" class="btn btn-primary">

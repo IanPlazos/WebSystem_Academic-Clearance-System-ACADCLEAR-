@@ -27,6 +27,7 @@ class UpdateController extends Controller
             'hasUpdate' => (bool) ($status['has_update'] ?? false),
             'isUpToDate' => $status['is_up_to_date'] ?? null,
             'updateError' => $status['error'] ?? null,
+            'localChanges' => $this->localChangeLines(),
         ]);
     }
 
@@ -40,10 +41,23 @@ class UpdateController extends Controller
                 ->with('update_success', 'App is already updated to the latest version (' . ($status['current_version'] ?? 'current') . ').');
         }
 
+        $localChanges = $this->localChangeLines();
+        if ($localChanges !== []) {
+            return redirect()
+                ->route('admin.update.index')
+                ->with('update_error', 'Update blocked because this app has uncommitted local changes. Commit or stash them first.')
+                ->with('update_logs', [[
+                    'label' => 'Preflight check',
+                    'command' => 'git status --short -- .',
+                    'exit_code' => 1,
+                    'output' => "Uncommitted changes found inside exampleapp:\n  " . implode("\n  ", $localChanges),
+                ]]);
+        }
+
         $command = $this->updateCommand();
         $logs = [[
             'label' => 'Download latest code and run update tasks',
-            'command' => basename((string) $command[0]) . ' scripts/' . (PHP_OS_FAMILY === 'Windows' ? 'apply-latest-update.cmd' : 'apply-latest-update.ps1'),
+            'command' => $this->displayCommand($command),
             'exit_code' => null,
             'output' => 'Starting update...',
         ]];
@@ -58,9 +72,11 @@ class UpdateController extends Controller
             $logs[0]['output'] = $output !== '' ? $output : 'No output.';
 
             if ($result->failed()) {
+                $failureSummary = $this->failureSummary($logs[0]['output']);
+
                 return redirect()
                     ->route('admin.update.index')
-                    ->with('update_error', 'Update failed while downloading or applying the latest code.')
+                    ->with('update_error', 'Update failed while downloading or applying the latest code. ' . $failureSummary)
                     ->with('update_logs', $logs);
             }
         } catch (Throwable $e) {
@@ -85,10 +101,12 @@ class UpdateController extends Controller
     {
         if (PHP_OS_FAMILY === 'Windows') {
             return [
-                'cmd',
-                '/d',
-                '/c',
-                base_path('scripts/apply-latest-update.cmd'),
+                'powershell.exe',
+                '-NoProfile',
+                '-ExecutionPolicy',
+                'Bypass',
+                '-File',
+                base_path('scripts/apply-latest-update.ps1'),
                 '-Branch',
                 (string) config('services.app_updates.branch', 'master'),
             ];
@@ -104,5 +122,51 @@ class UpdateController extends Controller
             '-Branch',
             (string) config('services.app_updates.branch', 'master'),
         ];
+    }
+
+    private function displayCommand(array $command): string
+    {
+        return collect($command)
+            ->map(fn (string $part): string => str_contains($part, base_path())
+                ? 'scripts/' . basename($part)
+                : $part)
+            ->implode(' ');
+    }
+
+    private function localChangeLines(): array
+    {
+        try {
+            $result = Process::path(base_path())
+                ->timeout(10)
+                ->run(['git', 'status', '--short', '--', '.']);
+
+            if ($result->failed()) {
+                return [];
+            }
+
+            $lines = preg_split('/\R/', trim($result->output())) ?: [];
+
+            return array_values(array_filter(
+                array_map(fn (string $line): string => trim($line), $lines),
+                fn (string $line): bool => $line !== ''
+            ));
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
+    private function failureSummary(string $output): string
+    {
+        $lines = preg_split('/\R/', trim($output)) ?: [];
+        $lines = array_values(array_filter($lines, fn (string $line): bool => trim($line) !== ''));
+
+        if ($lines === []) {
+            return 'Open Update Logs below for details.';
+        }
+
+        $errorLines = array_values(array_filter($lines, fn (string $line): bool => str_starts_with(trim($line), 'ERROR:')));
+        $lastLine = trim((string) ($errorLines !== [] ? end($errorLines) : end($lines)));
+
+        return 'Last error: ' . $lastLine;
     }
 }

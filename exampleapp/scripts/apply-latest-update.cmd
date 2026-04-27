@@ -52,8 +52,14 @@ if defined HAS_CHANGES (
 )
 
 echo Fetching latest changes...
-call :run git fetch origin
+call :run git fetch origin --tags
 if errorlevel 1 goto fail
+
+git show-ref --verify --quiet "refs/remotes/origin/%BRANCH%"
+if errorlevel 1 (
+    echo Remote branch not found: origin/%BRANCH%. Check APP_UPDATE_BRANCH in .env.
+    goto fail
+)
 
 set "CURRENT_BRANCH="
 for /f "delims=" %%A in ('git branch --show-current') do set "CURRENT_BRANCH=%%A"
@@ -64,7 +70,7 @@ if /I not "%CURRENT_BRANCH%"=="%BRANCH%" (
     if errorlevel 1 goto fail
 )
 
-call :run git pull origin "%BRANCH%"
+call :run git pull --ff-only origin "%BRANCH%"
 if errorlevel 1 goto fail
 
 if exist composer.json (
