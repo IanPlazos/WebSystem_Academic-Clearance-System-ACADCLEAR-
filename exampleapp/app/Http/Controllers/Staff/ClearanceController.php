@@ -10,6 +10,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\StudentClearanceApprovedMail;
 
 class ClearanceController extends Controller
 {
@@ -686,17 +688,30 @@ class ClearanceController extends Controller
      */
     private function recalculateClearanceStatus(Clearance $clearance): void
     {
-        $clearance->load('checklistItems');
+        $clearance->load('checklistItems', 'student');
 
         if ($clearance->checklistItems->isEmpty()) {
             return;
         }
 
+        $oldStatus = $clearance->status;
+
         $allApproved = $clearance->checklistItems->every(fn ($item) => $item->status === 'approved');
 
+        $newStatus = $allApproved ? 'approved' : 'pending';
+
         $clearance->update([
-            'status' => $allApproved ? 'approved' : 'pending',
+            'status' => $newStatus,
             'remarks' => $allApproved ? null : $clearance->remarks,
         ]);
+
+        // If clearance just transitioned to approved, notify the student.
+        if ($oldStatus !== 'approved' && $newStatus === 'approved' && $clearance->student && filled($clearance->student->email)) {
+            try {
+                Mail::to($clearance->student->email)->send(new StudentClearanceApprovedMail($clearance));
+            } catch (\Exception $e) {
+                // Swallow mail errors to avoid breaking approval flow; consider logging in the future.
+            }
+        }
     }
 }

@@ -16,17 +16,23 @@ class TenantController extends Controller
     {
         $query = Tenant::query();
 
-        if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('domain', 'like', '%' . $request->search . '%');
+        // Apply search filter (name OR domain) when a non-empty search term is provided
+        $search = trim((string) $request->input('search', ''));
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('domain', 'like', "%{$search}%");
+            });
         }
 
-        if ($request->has('status') && $request->status != '') {
+        // Apply status filter when provided
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        $tenants = $query->with('activeSubscription.plan')->paginate(5);
-        
+        // Eager load subscription plan and preserve query string for pagination links
+        $tenants = $query->with('activeSubscription.plan')->paginate(10)->withQueryString();
+
         return view('super-admin.tenants.index', compact('tenants'));
     }
 
