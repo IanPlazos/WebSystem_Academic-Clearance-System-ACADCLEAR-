@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ModuleController;
+Route::resource('modules', ModuleController::class);
 
 // Test subdomain detection (TEMPORARY - Remove after testing)
 Route::get('/test-subdomain', function () {

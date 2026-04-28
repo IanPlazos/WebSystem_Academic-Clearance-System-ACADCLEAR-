@@ -5,7 +5,7 @@
     <h1 class="h3 mb-0 text-gray-800">Pricing Plans</h1>
     <div class="d-flex align-items-center gap-2">
         <span class="badge bg-secondary px-3 py-2" style="font-size:0.8rem;">
-            <i class="fas fa-lock me-1"></i> Basic, Standard &amp; Enterprise are system plans
+            <i class="fas fa-lock me-1"></i> Basic, Standard &amp; Premium are system plans
         </span>
         <a href="{{ route('super-admin.plans.create') }}" class="btn btn-primary ms-2">
             <i class="fas fa-plus"></i> Add New Plan
@@ -90,7 +90,7 @@
                         <a href="{{ route('super-admin.plans.edit', $plan) }}" class="btn btn-sm btn-warning" title="Edit plan">
                             <i class="fas fa-edit"></i>
                         </a>
-                        @if(in_array($plan->slug, ['basic', 'standard', 'enterprise']))
+                        @if(in_array($plan->slug, ['basic', 'standard', 'premium', 'enterprise']))
                             <span class="badge bg-secondary ms-1" title="System plan — cannot be deleted">
                                 <i class="fas fa-lock"></i>
                             </span>

@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## v1.0.10 - 2026-04-28
+
+### Central app hotfix
+- Fixed merge-conflict markers that were breaking the super-admin tenants and subscriptions pages.
+- Aligned the central pricing catalog to Premium so the plan UI and request flow match the v1.0.7 release.
+- Kept legacy Enterprise plan requests compatible while normalizing them to Premium.
+
 ## v1.0.7 - 2026-04-27
 
 ### Plan enforcement and student limits

@@ -11,7 +11,7 @@ class PlanController extends Controller
      * These 3 slugs are constant system plans seeded automatically via migration.
      * They cannot be deleted — only edited (price/features can be updated).
      */
-    const SYSTEM_PLANS = ['basic', 'standard', 'enterprise'];
+    const SYSTEM_PLANS = ['basic', 'standard', 'premium', 'enterprise'];
 
     public function index()
     {
@@ -30,7 +30,7 @@ class PlanController extends Controller
         if (in_array(strtolower($request->input('slug', '')), self::SYSTEM_PLANS)) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Cannot create a plan with a reserved system slug (basic, standard, enterprise).');
+                ->with('error', 'Cannot create a plan with a reserved system slug (basic, standard, premium).');
         }
 
         $validated = $request->validate([
@@ -95,7 +95,7 @@ class PlanController extends Controller
         // Block deletion of the 3 system plans
         if (in_array($plan->slug, self::SYSTEM_PLANS)) {
             return redirect()->back()
-                ->with('error', 'System plans (Basic, Standard, Enterprise) cannot be deleted.');
+                ->with('error', 'System plans (Basic, Standard, Premium) cannot be deleted.');
         }
 
         if ($plan->subscriptions()->count() > 0) {

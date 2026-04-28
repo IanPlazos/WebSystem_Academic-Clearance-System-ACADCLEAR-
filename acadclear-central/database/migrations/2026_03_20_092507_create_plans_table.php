@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('plans', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Basic, Standard, Enterprise
-            $table->string('slug')->unique(); // basic, standard, enterprise
+            $table->string('name'); // Basic, Standard, Premium
+            $table->string('slug')->unique(); // basic, standard, premium
             $table->decimal('price', 10, 2); // 1500, 3000, 0 for custom
             $table->integer('max_students')->nullable(); // 500, 2000, null for unlimited
             $table->boolean('has_advanced_reports')->default(false);
@@ -72,9 +72,9 @@ return new class extends Migration
                 'updated_at' => $now,
             ],
             [
-                'name'                 => 'Enterprise',
-                'slug'                 => 'enterprise',
-                'price'                => 0.00,
+                'name'                 => 'Premium',
+                'slug'                 => 'premium',
+                'price'                => 20000.00,
                 'max_students'         => null,
                 'has_advanced_reports' => true,
                 'has_multi_campus'     => true,

@@ -36,7 +36,7 @@
                     @error('slug')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
-                    <small class="text-muted">Lowercase, no spaces. Cannot use: basic, standard, enterprise</small>
+                    <small class="text-muted">Lowercase, no spaces. Cannot use: basic, standard, premium</small>
                 </div>
             </div>
 

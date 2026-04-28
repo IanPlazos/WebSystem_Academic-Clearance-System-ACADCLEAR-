@@ -5,7 +5,7 @@
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">
         Edit Plan: {{ $plan->name }}
-        @if(in_array($plan->slug, ['basic', 'standard', 'enterprise']))
+        @if(in_array($plan->slug, ['basic', 'standard', 'premium', 'enterprise']))
             <span class="badge bg-secondary ms-2" style="font-size:0.7rem;">
                 <i class="fas fa-lock me-1"></i>System Plan
             </span>
@@ -291,7 +291,7 @@
 </div>
 
 {{-- Danger Zone — hidden for system plans --}}
-@if(!in_array($plan->slug, ['basic', 'standard', 'enterprise']))
+@if(!in_array($plan->slug, ['basic', 'standard', 'premium', 'enterprise']))
 <div class="card shadow mb-4 border-danger">
     <div class="card-header py-3 bg-danger text-white">
         <h6 class="m-0 font-weight-bold">
@@ -325,7 +325,7 @@
 <div class="alert alert-secondary d-flex align-items-center">
     <i class="fas fa-lock me-2 fs-5"></i>
     <div>
-        <strong>System Plan</strong> — Basic, Standard, and Enterprise plans are constants and cannot be deleted.
+        <strong>System Plan</strong> — Basic, Standard, and Premium plans are constants and cannot be deleted.
         You can still edit their name, price, and features above.
     </div>
 </div>
